@@ -1,6 +1,9 @@
 import sys
 import re
 import json
+import datetime
+from time import strftime
+from time import gmtime
 from typing import Optional, Sequence
 
 from configuration import config
@@ -319,8 +322,8 @@ def writeid3v2(fo, song):
     fo.write(hdr)
     fo.write(id3data)
 
-
-def download_song(song, output_file):
+ 
+def download_song(song, output_file, track_url=None):
     # downloads and decrypts the song from Deezer. Adds ID3 and art cover
     # song: dict with information of the song (grabbed from Deezer.com)
     # output_file: absolute file name of the output file
@@ -331,11 +334,18 @@ def download_song(song, output_file):
                    3 if song.get("FILESIZE_MP3_320") else \
                    5 if song.get("FILESIZE_MP3_256") else \
                    1
+                   
+    #print("Download song: '{}'".format(song))
+    #print("Download quality: '{}'".format(song_quality))
 
     urlkey = genurlkey(song["SNG_ID"], song["MD5_ORIGIN"], song["MEDIA_VERSION"], song_quality)
     key = calcbfkey(song["SNG_ID"])
     try:
         url = "https://e-cdns-proxy-%s.dzcdn.net/mobile/1/%s" % (song["MD5_ORIGIN"][0], urlkey.decode())
+        print("Download url: '{}'".format(url))
+        if type(track_url) == str:
+            url = track_url
+        print("Download override url: '{}'".format(url))
         fh = session.get(url)
         if fh.status_code != 200:
             # I don't why this happens. to reproduce:
@@ -371,6 +381,7 @@ def get_song_infos_from_deezer_website(search_type, id):
     # Deezer403Exception if we are not logged in
 
     url = "https://www.deezer.com/de/{}/{}".format(search_type, id)
+    print("Song info URL: ", url)
     resp = session.get(url)
     if resp.status_code == 404:
         raise Deezer404Exception("ERROR: Got a 404 for {} from Deezer".format(url))
@@ -412,6 +423,7 @@ def deezer_search(search, search_type):
     else:
         resp = session.get("https://api.deezer.com/search/{}?q={}".format(search_type, search)).json()['data']
     return_nice = []
+    print('Search: ', resp);
     for item in resp:
         i = {}
         if search_type == TYPE_ALBUM:
@@ -422,6 +434,8 @@ def deezer_search(search, search_type):
             i['img_url'] = item['cover_small']
             i['artist'] = item['artist']['name']
             i['title'] = ''
+            i['duration'] = str(datetime.timedelta(seconds=item['duration']))
+            i['link'] = item['link']
             i['preview_url'] = ''
 
         if search_type == TYPE_TRACK:
@@ -432,6 +446,8 @@ def deezer_search(search, search_type):
             i['album'] = item['album']['title']
             i['album_id'] = item['album']['id']
             i['artist'] = item['artist']['name']
+            i['duration'] = strftime("%M:%S", gmtime(item['duration']))
+            i['link'] = item['link']
             i['preview_url'] = item['preview']
 
         if search_type == TYPE_ALBUM_TRACK:
@@ -442,9 +458,12 @@ def deezer_search(search, search_type):
             i['album'] = item['ALB_TITLE']
             i['album_id'] = item['ALB_ID']
             i['artist'] = item['ART_NAME']
+            i['duration'] = str(datetime.timedelta(seconds=item['duration']))
+            i['link'] = item['link']
             i['preview_url'] = next(media['HREF'] for media in item['MEDIA'] if media['TYPE'] == 'preview')
 
         return_nice.append(i)
+        print('Response: ', return_nice)
     return return_nice
 
 

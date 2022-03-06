@@ -71,9 +71,20 @@ def clean_filename(path):
     else:
         return path.replace("/", "")
 
+def song_getx(song, key):
+    try:
+        return song.get(key)
+    except:
+        print("noversion")
+        return ''
 
-def download_song_and_get_absolute_filename(search_type, song, playlist_name=None):
-    song_filename = "{} - {}.{}".format(song['ART_NAME'], song['SNG_TITLE'], 'flac' if config['deezer'].getboolean('flac_quality') else 'mp3')
+def download_song_and_get_absolute_filename(search_type, song, playlist_name=None, track_url=None):
+    if song_getx(song, 'VERSION') != '' and song_getx(song, 'VERSION') != None:
+        print ("Version: ", song_getx(song, 'VERSION'))
+        song_filename = "{} - {} {}.{}".format(song['ART_NAME'], song['SNG_TITLE'], song_getx(song, 'VERSION'), 'flac' if config['deezer'].getboolean('flac_quality') else 'mp3')
+    else:
+        song_filename = "{} - {}.{}".format(song['ART_NAME'], song['SNG_TITLE'], 'flac' if config['deezer'].getboolean('flac_quality') else 'mp3')
+    print ("Songname: ", song_filename)
     song_filename = clean_filename(song_filename)
 
     if search_type == TYPE_TRACK:
@@ -94,10 +105,11 @@ def download_song_and_get_absolute_filename(search_type, song, playlist_name=Non
         absolute_filename = os.path.join(playlist_dir, song_filename)
 
     if os.path.exists(absolute_filename):
-        print("Skipping song '{}'. Already exists.".format(absolute_filename))
+        print("Already exists, overwriting '{}'".format(absolute_filename))
+        download_song(song, absolute_filename, track_url)
     else:
         print("Downloading '{}'".format(song_filename))
-        download_song(song, absolute_filename)
+        download_song(song, absolute_filename, track_url)
     return absolute_filename
 
 

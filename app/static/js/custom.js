@@ -26,6 +26,7 @@ function deezer_download(music_id, type, add_to_playlist, create_zip) {
 
 
 function play_preview(src) {
+    $("#audio_tag")[0].volume = 0.2;
     $("#audio_tag").attr("src", src)[0].play();
 }
 
@@ -103,12 +104,15 @@ $(document).ready(function() {
     }
 
     function drawTableEntry(rowData, mtype) {
+
         var row = $("<tr>");
         $("#results").append(row); 
-        row.append($("<td>" + rowData.artist + "</td>"));
-        row.append($("<td>" + rowData.title + "</td>"));
-        
-        row.append("<td><img src='"+rowData.img_url+"'> " + rowData.album + "</a></td>");
+        row.append("<td><img src='"+rowData.img_url+"'></img></td>");
+        row.append($("<td><a href=\"" + rowData.link + "?autoplay=true\" target=\"_deezer\">" + rowData.title + "</a></td>"));
+        row.append($("<td>" + rowData.artist + "</td>"));        
+        row.append("<td>" + rowData.album + "</td>");
+        row.append($("<td>" + rowData.duration + "</td>"));
+
         
         if (rowData.preview_url) {
             row.append($('<td> <button class="btn btn-default" onclick="play_preview(\'' + rowData.preview_url + '\');" > <i class="fa fa-headphones fa-lg" title="listen preview in browser" ></i> </button> </td>'));
