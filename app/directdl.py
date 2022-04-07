@@ -259,11 +259,11 @@ def main(argv):
     try:
         opts, args = getopt.getopt(argv,"hi:q:u:",["trackid=","quality=","track_url="])
     except getopt.GetoptError:
-        print('app2.py -i <trackid> -u <trackurl> -q <quality>')
+        print('directdl.py -i <trackid> -u <trackurl> -q <quality>')
         sys.exit(2)
     for opt, arg in opts:
         if opt == '-h':
-            print('app2.py -i <trackid> -u <trackurl> -q <quality>')
+            print('directdl.py -i <trackid> -u <trackurl> -q <quality>')
             sys.exit()
         elif opt in ("-i", "--trackid"):
             track_id = arg
