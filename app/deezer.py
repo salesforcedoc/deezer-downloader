@@ -165,7 +165,7 @@ def writeid3v1_1(fo, song):
     # s => bytes
     data = struct.pack("3s" "30s" "30s" "30s" "4s" "28sB" "B"  "B",
                        b"TAG",                                            # header
-                       song_get(song, "SNG_TITLE"),                       # title
+                       song_get(song, "SNG_TITLE") + ' ' + song_get(song, "VERSION"),                       # title
                        song_get(song, "ART_NAME"),                        # artist
                        song_get(song, "ALB_TITLE"),                       # album
                        album_get("PHYSICAL_RELEASE_DATE"),                # year
@@ -208,6 +208,17 @@ def writeid3v2(fo, song):
     def song_get(song, key):
         try:
             return song[key]
+        except:
+            #raise
+            return ""
+
+    # alternate version that adds version to the song title
+    def song_getz(song, key):
+        try:
+            if key == "SNG_TITLE":
+                return song[key] + ' ' + song["VERSION"] 
+            else:
+                return song[key]
         except:
             #raise
             return ""
@@ -289,7 +300,7 @@ def writeid3v2(fo, song):
 
         ]  # decimal, no term NUL
     id3.extend([
-        maketag(ID_id3_frame, makeutf8(song_get(song, ID_song))) for (ID_id3_frame, ID_song) in \
+        maketag(ID_id3_frame, makeutf8(song_getz(song, ID_song))) for (ID_id3_frame, ID_song) in \
         (
             ("TALB", "ALB_TITLE"),   # The 'Album/Movie/Show title' frame is intended for the title of the recording(/source of sound) which the audio in the file is taken from.
             ("TPE1", "ART_NAME"),   # The 'Lead artist(s)/Lead performer(s)/Soloist(s)/Performing group' is used for the main artist(s). They are seperated with the "/" character.

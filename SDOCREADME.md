@@ -6,3 +6,7 @@
 - click to song
 - extract "media" URL
 - wget "media" URL
+
+
+- pip3 install -r requirements.txt
+update youtube-dl location in settings.ini
