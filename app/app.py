@@ -29,8 +29,8 @@ def validate_schema(*parameters_to_check):
             if set(j.keys()) != set(parameters_to_check):
                 return jsonify({"error": 'parameters not fitting. Required: {}'.format(parameters_to_check)}), 400
             if "type" in j.keys():
-                if j['type'] not in ["album", "track", "album_track"]:
-                    return jsonify({"error": "type must be album, track or album_track"}), 400
+                if j['type'] not in ["album", "track", "album_track", "playlist"]:
+                    return jsonify({"error": "type must be album, track, album_track or playlist"}), 400
             if "music_id" in j.keys():
                 if type(j['music_id']) != int:
                     return jsonify({"error": "music_id must be a integer"}), 400
@@ -124,7 +124,7 @@ def search():
     """
     searches for available music in the Deezer library
     para:
-        type: track|album|album_track
+        type: track|album|album_track|playlist
         query: search query
     return:
         json: [ { artist, id, (title|album) } ]

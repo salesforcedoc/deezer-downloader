@@ -165,7 +165,8 @@ def writeid3v1_1(fo, song):
     # s => bytes
     data = struct.pack("3s" "30s" "30s" "30s" "4s" "28sB" "B"  "B",
                        b"TAG",                                            # header
-                       song_get(song, "SNG_TITLE") + ' ' + song_get(song, "VERSION"),                       # title
+                       #song_get(song, "SNG_TITLE") + ' ' + song_get(song, "VERSION"),                       # title + version
+                       song_get(song, "SNG_TITLE"),                       # title
                        song_get(song, "ART_NAME"),                        # artist
                        song_get(song, "ALB_TITLE"),                       # album
                        album_get("PHYSICAL_RELEASE_DATE"),                # year
@@ -287,12 +288,18 @@ def writeid3v2(fo, song):
     except:
         pass
 
+    # get DIGITAL_RELEASE_DATE as YYYY
+    try:
+        digitalRelDate_YYYY = album_get("DIGITAL_RELEASE_DATE")[:4]
+    except:
+        digitalRelDate_YYYY = ''        
+
     # http://id3.org/id3v2.3.0#Attached_picture
     id3 = [
         maketag("TRCK", makeutf8(track)),     # The 'Track number/Position in set' frame is a numeric string containing the order number of the audio-file on its original recording. This may be extended with a "/" character and a numeric string containing the total numer of tracks/elements on the original recording. E.g. "4/9".
         maketag("TLEN", makeutf8(str(int(song["DURATION"]) * 1000))),     # The 'Length' frame contains the length of the audiofile in milliseconds, represented as a numeric string.
         maketag("TORY", makeutf8(str(album_get("PHYSICAL_RELEASE_DATE")[:4]))),     # The 'Original release year' frame is intended for the year when the original recording was released. if for example the music in the file should be a cover of a previously released song
-        maketag("TYER", makeutf8(str(album_get("DIGITAL_RELEASE_DATE")[:4]))),     # The 'Year' frame is a numeric string with a year of the recording. This frames is always four characters long (until the year 10000).
+        maketag("TYER", makeutf8(str(digitalRelDate_YYYY))),     # The 'Year' frame is a numeric string with a year of the recording. This frames is always four characters long (until the year 10000).
         maketag("TDAT", makeutf8(str(phyDate_DDMM))),     # The 'Date' frame is a numeric string in the DDMM format containing the date for the recording. This field is always four characters long.
         maketag("TPUB", makeutf8(album_get("LABEL_NAME"))),     # The 'Publisher' frame simply contains the name of the label or publisher.
         maketag("TSIZ", makeutf8(str(FileSize))),     # The 'Size' frame contains the size of the audiofile in bytes, excluding the ID3v2 tag, represented as a numeric string.
@@ -425,17 +432,29 @@ def deezer_search(search, search_type):
     # search_type: either one of the constants: TYPE_TRACK|TYPE_ALBUM|TYPE_ALBUM_TRACK (TYPE_PLAYLIST is not supported)
     # return: list of dicts (keys depend on search_type)
 
-    if search_type not in [TYPE_TRACK, TYPE_ALBUM, TYPE_ALBUM_TRACK]:
+    if search_type not in [TYPE_TRACK, TYPE_ALBUM, TYPE_ALBUM_TRACK, TYPE_PLAYLIST]:
         print("ERROR: search_type is wrong: {}".format(search_type))
         return []
     search = urllib.parse.quote_plus(search)
+    print("ERROR: {}".format(search_type))
     if search_type == TYPE_ALBUM_TRACK:
         resp = get_song_infos_from_deezer_website(TYPE_ALBUM, search)
+    elif search_type == TYPE_PLAYLIST:
+        print('Playlist');
+        resp = session.get("https://api.deezer.com/playlist/{}".format(search)).json()['tracks']
+        resp = resp['data']
+        print("https://api.deezer.com/playlist/{}".format(search))
+        print('Response: ', resp);
     else:
         resp = session.get("https://api.deezer.com/search/{}?q={}".format(search_type, search)).json()['data']
+        print("https://api.deezer.com/search/{}?q={}".format(search_type, search))
+        print('Response: ', resp);
+
     return_nice = []
-    print('Search: ', resp);
+    print('Response: ', resp);
     for item in resp:
+        print('Item: ', item)
+
         i = {}
         if search_type == TYPE_ALBUM:
             i['id'] = str(item['id'])
@@ -462,19 +481,33 @@ def deezer_search(search, search_type):
             i['preview_url'] = item['preview']
 
         if search_type == TYPE_ALBUM_TRACK:
-            i['id'] = str(item['SNG_ID'])
-            i['id_type'] = TYPE_TRACK
-            i['title'] = item['SNG_TITLE']
-            i['img_url'] = '' # item['album']['cover_small']
-            i['album'] = item['ALB_TITLE']
-            i['album_id'] = item['ALB_ID']
-            i['artist'] = item['ART_NAME']
-            i['duration'] = str(datetime.timedelta(seconds=item['duration']))
-            i['link'] = item['link']
-            i['preview_url'] = next(media['HREF'] for media in item['MEDIA'] if media['TYPE'] == 'preview')
+            if item['id'] > 0:
+                i['id'] = str(item['SNG_ID'])
+                i['id_type'] = TYPE_TRACK
+                i['title'] = item['SNG_TITLE']
+                i['img_url'] = '' # item['album']['cover_small']
+                i['album'] = item['ALB_TITLE']
+                i['album_id'] = item['ALB_ID']
+                i['artist'] = item['ART_NAME']
+                i['duration'] = str(datetime.timedelta(seconds=item['duration']))
+                i['link'] = item['link']
+                i['preview_url'] = next(media['HREF'] for media in item['MEDIA'] if media['TYPE'] == 'preview')
+
+        if search_type == TYPE_PLAYLIST:
+            if item['id'] > 0:
+                i['id'] = str(item['id'])
+                i['id_type'] = TYPE_TRACK
+                i['title'] = item['title']
+                i['img_url'] = item['album']['cover_small']
+                i['album'] = item['album']['title']
+                i['album_id'] = item['album']['id']
+                i['artist'] = item['artist']['name']
+                i['duration'] = strftime("%M:%S", gmtime(item['duration']))
+                i['link'] = item['link']
+                i['preview_url'] = item['preview']
 
         return_nice.append(i)
-        print('Response: ', return_nice)
+        # print('Response: ', return_nice)
     return return_nice
 
 

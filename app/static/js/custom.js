@@ -26,7 +26,7 @@ function deezer_download(music_id, type, add_to_playlist, create_zip) {
 
 
 function play_preview(src) {
-    $("#audio_tag")[0].volume = 0.2;
+    $("#audio_tag")[0].volume = 0.5;
     $("#audio_tag").attr("src", src)[0].play();
 }
 
@@ -74,7 +74,7 @@ $(document).ready(function() {
                 $.jGrowl("As you wish", { life: 4000 });
             });
     }
-    
+
 
     function deezer_favorites_download(add_to_playlist, create_zip) {
         $.post(deezer_downloader_api_root + '/favorites/deezer',
@@ -108,6 +108,7 @@ $(document).ready(function() {
         var row = $("<tr>");
         $("#results").append(row); 
         row.append("<td><img src='"+rowData.img_url+"'></img></td>");
+        row.append("<td>"+rowData.id+"</td>");
         row.append($("<td><a href=\"" + rowData.link + "?autoplay=true\" target=\"_deezer\">" + rowData.title + "</a></td>"));
         row.append($("<td>" + rowData.artist + "</td>"));        
         row.append("<td>" + rowData.album + "</td>");
@@ -177,6 +178,10 @@ $(document).ready(function() {
 
     $("#search_album").click(function() {
         search("album");
+    });
+    
+    $("#search_playlist").click(function() {
+        search("playlist");
     });
     
     $("#yt_download").click(function() {
