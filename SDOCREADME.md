@@ -7,10 +7,13 @@
 - extract "media" URL
 - wget "media" URL
 
->> workstation 1
 pip install -r requirements.txt
 pip install -U youtube-dl
 python3 --version
+
+>> workstation 2
+
+>> workstation 1 - workirng
 # Python 3.9.6
 pip --version
 # pip 23.3.2 from /Users/asim/Library/Python/3.9/lib/python/site-packages/pip (python 3.9)
