@@ -9,16 +9,7 @@
 
 pip install -r requirements.txt
 pip install -U youtube-dl
-python3 --version
 
->> workstation 2
-
->> workstation 1 - workirng
-# Python 3.9.6
-pip --version
-# pip 23.3.2 from /Users/asim/Library/Python/3.9/lib/python/site-packages/pip (python 3.9)
-pip3 --version
-# pip 23.3.2 from /Users/asim/Library/Python/3.9/lib/python/site-packages/pip (python 3.9)
-
+# /Library/Developer/CommandLineTools/usr/bin/python3 -m pip install --upgrade pip
 # update arl in settings.ini
 # update youtube-dl location in settings.ini

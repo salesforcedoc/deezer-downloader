@@ -66,9 +66,9 @@ apt-get update -q
 apt-get install -qy vim tmux git gcc ffmpeg
 apt-get install -qy python3-virtualenv python3-dev
 git clone https://github.com/kmille/deezer-downloader.git /opt/deezer
-python3 -m virtualenv -p python3 /opt/deezer/app/venv
-source /opt/deezer/app/venv/bin/activate
-pip install -r /opt/deezer/requirements.txt
+python3 -m virtualenv -p python3 ~/deezer/venv
+source ~/deezer/venv/bin/activate
+pip install -r ~/deezer/requirements.txt
 pip install -U youtube-dl
 cp /opt/deezer/app/settings.ini.example /opt/deezer/app/settings.ini
 # Adjust /opt/deezer/app/settings.ini
