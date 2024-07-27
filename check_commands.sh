@@ -3,9 +3,9 @@
 function check_command() {
     echo 
     echo
-    echo $i
+    echo "${1}"
     ${1} --version
-    which $i
+    which "${1}"
     ls -l $(which ${1})
 }
 
