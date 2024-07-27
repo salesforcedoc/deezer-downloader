@@ -3,8 +3,9 @@
 function check_command() {
     echo 
     echo
-    echo python
+    echo $i
     ${1} --version
+    which $i
     ls -l $(which ${1})
 }
 
