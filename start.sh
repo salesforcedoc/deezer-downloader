@@ -6,8 +6,12 @@ source ./conda_env.sh
 # start the backend
 DEEZER_FLAC_QUALITY=
 
+# kill any previous instances
 kill $(ps -ef | grep app.py | awk '{print $2}')  > /dev/null 2>&1
+
+# startup app
 python3 app/app.py & 
+
 # view frontend in the browser
 open http://localhost:5000
 #ncmpcpp -h 127.0.0.1
