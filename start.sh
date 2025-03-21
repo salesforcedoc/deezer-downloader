@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# assume you have conda installed / python 3.10
+source ./conda_env.sh
+
 # start the backend
 DEEZER_FLAC_QUALITY=
 
