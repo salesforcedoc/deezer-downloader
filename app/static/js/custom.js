@@ -107,11 +107,11 @@ $(document).ready(function() {
 
         var row = $("<tr>");
         $("#results").append(row); 
-        row.append("<td><img src='"+rowData.img_url+"'></img></td>");
-        row.append("<td>"+rowData.id+"</td>");
+        row.append($("<td><a href=\"" + rowData.big_img_url + "\" target=\"_art\"><img src='"+rowData.img_url+"'></img></a></td>"));
+        row.append($("<td>"+rowData.id+"</td>"));
         row.append($("<td><a href=\"" + rowData.link + "?autoplay=true\" target=\"_deezer\">" + rowData.title + "</a></td>"));
         row.append($("<td>" + rowData.artist + "</td>"));        
-        row.append("<td>" + rowData.album + "</td>");
+        row.append($("<td>" + rowData.album + "</td>"));
         row.append($("<td>" + rowData.duration + "</td>"));
 
         

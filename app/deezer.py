@@ -462,6 +462,7 @@ def deezer_search(search, search_type):
             i['album'] = item['title']
             i['album_id'] = item['id']
             i['img_url'] = item['cover_small']
+            i['big_img_url'] = item['cover_big']
             i['artist'] = item['artist']['name']
             i['title'] = ''
             i['duration'] = str(datetime.timedelta(seconds=item['duration']))
@@ -473,6 +474,7 @@ def deezer_search(search, search_type):
             i['id_type'] = TYPE_TRACK
             i['title'] = item['title']
             i['img_url'] = item['album']['cover_small']
+            i['big_img_url'] = item['album']['cover_big']
             i['album'] = item['album']['title']
             i['album_id'] = item['album']['id']
             i['artist'] = item['artist']['name']
@@ -486,6 +488,7 @@ def deezer_search(search, search_type):
                 i['id_type'] = TYPE_TRACK
                 i['title'] = item['SNG_TITLE']
                 i['img_url'] = '' # item['album']['cover_small']
+                i['big_img_url'] = '' # item['album']['cover_small']
                 i['album'] = item['ALB_TITLE']
                 i['album_id'] = item['ALB_ID']
                 i['artist'] = item['ART_NAME']
@@ -499,6 +502,7 @@ def deezer_search(search, search_type):
                 i['id_type'] = TYPE_TRACK
                 i['title'] = item['title']
                 i['img_url'] = item['album']['cover_small']
+                i['big_img_url'] = item['album']['cover_big']
                 i['album'] = item['album']['title']
                 i['album_id'] = item['album']['id']
                 i['artist'] = item['artist']['name']
