@@ -6,7 +6,7 @@ source ./conda_env.sh
 # start the backend
 DEEZER_FLAC_QUALITY=
 
-kill $(ps -ef | grep app.py | awk '{print $2}')
+kill $(ps -ef | grep app.py | awk '{print $2}')  > /dev/null 2>&1
 python3 app/app.py & 
 # view frontend in the browser
 open http://localhost:5000
