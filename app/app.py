@@ -66,13 +66,26 @@ def validate_schema(*parameters_to_check):
     return decorator
 
 
-@app.route("/")
+@app.route("/", methods=["GET"])
 def index():
+    query = request.args.get('query')
+    print(f'query={query}')
     return render_template("index.html",
+                           query=query,
                            api_root=config["http"]["api_root"],
                            static_root=config["http"]["static_root"],
                            use_mpd=str(config['mpd'].getboolean('use_mpd')).lower())
 
+@app.route('/find', methods=['GET'])
+def find():
+    query = request.args.get('query')
+    print(f'query={query}')
+    return render_template("index.html",
+                           query=query,
+                           api_root=config["http"]["api_root"],
+                           static_root=config["http"]["static_root"],
+                           use_mpd=str(config['mpd'].getboolean('use_mpd')).lower())
+         
 
 @app.route("/debug")
 def show_debug():
