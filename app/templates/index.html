@@ -20,219 +20,457 @@
   <link rel="stylesheet" type="text/css" href="{{ static_root }}/css/jquery.jgrowl.min.css" />
 
 <style>
-    @keyframes marquee {
-      0%   { transform: translateX(100%); }
-      100% { transform: translateX(-100%); }
-    }
-    #now-playing {
-      animation: marquee 10s linear infinite;
-      display: inline-block;
-    }
-    #now-playing-container {
-      width: 300px;
-      overflow: hidden;
-      white-space: nowrap;
-    }
-    .footer {
-      position: fixed;
-      bottom: 0;
-      width: 80%;
-      left: 10%;
-      height: 40px;
-      background-color: #f5f5f5;
-      text-align: center;
-    }
+  :root {
+    --bg:        #0f0f14;
+    --surface:   #1a1a24;
+    --surface2:  #23232f;
+    --border:    #2a2a38;
+    --text:      #e0e0ee;
+    --muted:     #7070a0;
+    --accent:    #7c6ef7;
+    --accent-h:  #9580ff;
+    --danger:    #e05c5c;
+    --radius:    8px;
+  }
+
+  [data-theme="light"] {
+    --bg:        #f4f4f8;
+    --surface:   #ffffff;
+    --surface2:  #ebebf2;
+    --border:    #d8d8e8;
+    --text:      #1a1a2e;
+    --muted:     #7070a0;
+    --accent:    #6c5ce7;
+    --accent-h:  #7c6ef7;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+
+  html, body {
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    font-size: 14px;
+  }
+
+  /* ── Scrollbar ── */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  /* ── Container ── */
+  .container { max-width: 1100px; padding-bottom: 90px; }
+
+  /* ── Tabs ── */
+  #navigation {
+    border-bottom: 1px solid var(--border);
+    gap: 2px;
+    flex-wrap: wrap;
+  }
+  #navigation .nav-link {
+    color: var(--muted);
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: var(--radius) var(--radius) 0 0;
+    padding: 8px 14px;
+    font-size: 0.82em;
+    letter-spacing: 0.02em;
+    transition: color .15s, background .15s;
+  }
+  #navigation .nav-link:hover {
+    color: var(--text);
+    background: var(--surface2);
+  }
+  #navigation .nav-link.active {
+    color: var(--accent);
+    background: var(--surface);
+    border-color: var(--border) var(--border) var(--surface);
+  }
+
+  /* ── Tab content ── */
+  .tab-pane { padding: 24px 0; }
+
+  h3 {
+    font-size: 1em;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 16px;
+  }
+
+  /* ── Inputs ── */
+  .form-control {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: var(--radius);
+    padding: 8px 12px;
+    transition: border-color .15s;
+  }
+  .form-control:focus {
+    background: var(--surface2);
+    border-color: var(--accent);
+    color: var(--text);
+    box-shadow: 0 0 0 2px rgba(124,110,247,.18);
+    outline: none;
+  }
+  .form-control::placeholder { color: var(--muted); }
+
+  textarea.form-control { height: calc(100vh - 260px); resize: none; font-family: monospace; font-size: 0.82em; }
+
+  /* ── Buttons ── */
+  .btn {
+    border-radius: var(--radius);
+    font-size: 0.82em;
+    padding: 7px 14px;
+    border: 1px solid transparent;
+    transition: background .15s, border-color .15s, color .15s;
+    white-space: nowrap;
+  }
+  .btn-info, .btn-primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+  }
+  .btn-info:hover, .btn-primary:hover {
+    background: var(--accent-h);
+    border-color: var(--accent-h);
+    color: #fff;
+  }
+  .btn-default, .btn-secondary {
+    background: var(--surface2);
+    border-color: var(--border);
+    color: var(--text);
+  }
+  .btn-default:hover, .btn-secondary:hover {
+    background: var(--border);
+    color: var(--text);
+  }
+
+  .input-group { display: flex; gap: 8px; flex-wrap: wrap; align-items: stretch; }
+  .input-group .form-control { flex: 1 1 200px; }
+  .input-group-btn { display: flex; gap: 6px; flex-wrap: wrap; }
+
+  /* ── Table ── */
+  .table {
+    color: var(--text);
+    border-collapse: separate;
+    border-spacing: 0;
+    width: 100%;
+    margin-top: 20px;
+  }
+  .table thead th {
+    background: var(--surface2);
+    border: none;
+    border-bottom: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 0.75em;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 10px 12px;
+    font-weight: 600;
+  }
+  .table thead th:first-child { border-radius: var(--radius) 0 0 0; }
+  .table thead th:last-child  { border-radius: 0 var(--radius) 0 0; }
+  .table tbody td {
+    background: var(--surface);
+    border: none;
+    border-bottom: 1px solid var(--border);
+    padding: 8px 12px;
+    vertical-align: middle;
+  }
+  .table tbody tr:last-child td { border-bottom: none; }
+  .table tbody tr:hover td { background: var(--surface2); }
+  .table img { width: 40px; height: 40px; border-radius: 4px; object-fit: cover; }
+  .table a { color: var(--accent); text-decoration: none; }
+  .table a:hover { color: var(--accent-h); text-decoration: underline; }
+  .table .btn { padding: 4px 8px; font-size: 0.78em; }
+
+  /* ── Results count ── */
+  #results-count { text-align: right; color: var(--muted); font-size: 0.8em; margin-top: 8px; }
+
+  /* ── Queue progress ── */
+  progress { width: 100%; height: 4px; border-radius: 2px; appearance: none; }
+  progress::-webkit-progress-bar { background: var(--border); border-radius: 2px; }
+  progress::-webkit-progress-value { background: var(--accent); border-radius: 2px; }
+
+  /* ── Now-playing bar ── */
+  #playbar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 64px;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 0 24px;
+    z-index: 1000;
+  }
+  #playbar-label {
+    font-size: 0.75em;
+    color: var(--muted);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  #now-playing-container {
+    flex: 1;
+    overflow: hidden;
+    white-space: nowrap;
+
+  }
+  #now-playing {
+    display: inline-block;
+    font-size: 0.88em;
+    color: var(--text);
+  }
+  #now-playing.scrolling {
+    animation: marquee 14s linear infinite;
+  }
+  @keyframes marquee {
+    0%   { transform: translateX(60%); }
+    100% { transform: translateX(-100%); }
+  }
+
+  #audio_tag {
+    height: 36px;
+    flex-shrink: 0;
+  }
+
+  /* ── Theme toggle ── */
+  #theme-toggle {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    border-radius: 20px;
+    padding: 4px 10px;
+    font-size: 0.8em;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: color .15s, background .15s, border-color .15s;
+    white-space: nowrap;
+    align-self: center;
+    margin-left: auto;
+  }
+  #theme-toggle:hover { color: var(--text); border-color: var(--accent); }
+
+  /* ── jGrowl override ── */
+  .jGrowl-notification {
+    background: var(--surface2) !important;
+    border: 1px solid var(--border) !important;
+    color: var(--text) !important;
+    border-radius: var(--radius) !important;
+    font-size: 0.85em !important;
+  }
 </style>
 
 </head>
-<body id="body" >
+<body id="body">
 
 <div class="container">
-
   <br>
-
-  <div class="row">
-
-   <ul id="navigation" class="nav nav-tabs" role="tablist">
-    <li class="nav-item">
-      <a class="nav-link active" id="nav-songs-albums" data-toggle="tab" href="#songs_albums">Songs/Albums (1)</a>
-    </li>
-    <li class="nav-item">
-      <a class="nav-link" id="nav-youtubedl" data-toggle="tab" href="#youtubedl">Youtube-dl (2)</a>
-    </li>
-    <li class="nav-item">
-      <a class="nav-link" id="nav-spotify-playlists" data-toggle="tab" href="#spotify-playlists">Spotify Playlists (3)</a>
-    </li>
-    <li class="nav-item">
-      <a class="nav-link" id="nav-deezer" data-toggle="tab" href="#deezer">Deezer (4)</a>
-    </li>
-    <li class="nav-item">
-      <a class="nav-link" id="nav-file-downloads" href="downloads/" target="_blank" >Files (5)</a>
-    </li>
-    <li class="nav-item">
-      <a class="nav-link" id="nav-debug-log" data-toggle="tab" href="#debug">Debug (6)</a>
-    </li>
-    <li class="nav-item">
-      <a class="nav-link" id="nav-task-queue" data-toggle="tab" href="#queue">Queue (7)</a>
-    </li>
-  </ul>
-  <div style="position:fixed; top:10px; right:10px; z-index:1000; display:flex; flex-direction:column; align-items:flex-end;">
-    <div id="now-playing-container" style="font-size:0.8em; margin-bottom:4px;"><span id="now-playing"></span></div>
-    <audio src="" controls id="audio_tag"></audio>
+  <div class="row" style="display:flex; align-items:flex-end; gap:8px;">
+    <ul id="navigation" class="nav nav-tabs" role="tablist" style="flex:1;">
+      <li class="nav-item">
+        <a class="nav-link active" id="nav-songs-albums" data-toggle="tab" href="#songs_albums">Songs / Albums</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" id="nav-youtubedl" data-toggle="tab" href="#youtubedl">Youtube-dl</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" id="nav-spotify-playlists" data-toggle="tab" href="#spotify-playlists">Spotify</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" id="nav-deezer" data-toggle="tab" href="#deezer">Deezer</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" id="nav-file-downloads" href="downloads/" target="_blank">Files</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" id="nav-debug-log" data-toggle="tab" href="#debug">Debug</a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" id="nav-task-queue" data-toggle="tab" href="#queue">Queue</a>
+      </li>
+    </ul>
+    <button id="theme-toggle" title="Toggle day / night mode">
+      <i class="fa fa-moon-o"></i><span id="theme-label">Night</span>
+    </button>
   </div>
-  </div>   <!-- end row -->
 
   <!-- Tab panes -->
   <div class="tab-content">
 
-     <div id="songs_albums" class="container tab-pane active">
-         <br>
-         <h3>Search</h3>
-         <br>
-         <div class="input-group">
-             <input type="text" class="form-control" id="songs-albums-query" placeholder="Search for ..." value="{{ query }}" />
-                &nbsp;
-             <span class="input-group-btn">
-                 <button type="button" class="btn btn-info" id="search_track">Search Track</button>
-                 <button type="button" class="btn btn-info" id="search_artist">Search Artist</button>
-                 <button type="button" class="btn btn-info" id="search_playlist">Search Playlist</button>
-             </span>
-          </div>
+    <div id="songs_albums" class="container tab-pane active">
+      <h3>Search</h3>
+      <div class="input-group">
+        <input type="text" class="form-control" id="songs-albums-query" placeholder="Search for songs, artists, albums…" value="{{ query }}" />
+        <span class="input-group-btn">
+          <button type="button" class="btn btn-info" id="search_track">Track</button>
+          <button type="button" class="btn btn-info" id="search_artist">Artist</button>
+          <button type="button" class="btn btn-info" id="search_playlist">Playlist</button>
+        </span>
+      </div>
 
-         <table id="results" class="table">
-            <thead>
-                <tr>
-                    <th></th>
-                    <th>Id</th>
-                    <th>Title</th>
-                    <th>Artist</th>
-                    <th>Album</th>
-                    <th>Time</th>
-                    <th></th>
-                </tr>
-            </thead>
-            <tbody>
-            </tbody>
-         </table>
-         <div id="results-count" style="text-align:right; color:gray; font-size:0.85em;"></div>
-     </div> <!-- end div tab songs/albums -->
+      <table id="results" class="table">
+        <thead>
+          <tr>
+            <th></th>
+            <th>ID</th>
+            <th>Title</th>
+            <th>Artist</th>
+            <th>Album</th>
+            <th>Time</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+      <div id="results-count"></div>
+    </div>
 
 
-     <div id="youtubedl" class="container tab-pane fade">
-         <br>
-         <h3>Download stuff via youtube-dl</h3>
-         <div class="input-group">
-             <input type="text" class="form-control" id="youtubedl-query" placeholder="Download audio from YouTube, Invidious, Vimeo, Soundcloud, YouPorn, ... " />
-                &nbsp;
-         </div>
-         <br>
-                 <span class="input-group-btn">
-                     <button type="button" class="btn btn-info" id="yt_download_play">Download & Play</button>
-                     <button type="button" class="btn btn-info" id="yt_download">Download</button>
-                     <button type="button" class="btn btn-info" onclick="$('#youtubedl-query').val('')" >Clear</button>
-                 </span>
-     </div> <!-- end div tab youtube-dl -->
+    <div id="youtubedl" class="container tab-pane fade">
+      <h3>Download via youtube-dl</h3>
+      <div class="input-group">
+        <input type="text" class="form-control" id="youtubedl-query" placeholder="YouTube, Invidious, Vimeo, SoundCloud…" />
+      </div>
+      <br>
+      <div class="input-group-btn">
+        <button type="button" class="btn btn-info" id="yt_download_play">Download &amp; Play</button>
+        <button type="button" class="btn btn-info" id="yt_download">Download</button>
+        <button type="button" class="btn btn-default" onclick="$('#youtubedl-query').val('')">Clear</button>
+      </div>
+    </div>
 
 
-     <div id="spotify-playlists" class="container tab-pane fade">
-       <br>
-       <h3>Download Spotify playlist</h3>
-       <div class="input-group">
-           <input type="text" class="form-control" id="spotify-playlist-name" placeholder="name of spotify playlist" />
-           &nbsp;
-           <input type="text" class="form-control" id="spotify-playlist-url" placeholder="url or id of the playlist" />
-           &nbsp;
-       </div>
-       <br>
-       <div class="input-group">
-               <span class="input-group-btn">
-                   <button type="button" class="btn btn-info" id="spotify_download_play">Download & Play</button>
-                   <button type="button" class="btn btn-info" id="spotify_download">Download</button>
-                   <button type="button" class="btn btn-info" id="spotify_zip">Give me a zip</button>
-                   <button type="button" class="btn btn-info" onclick="$('input[id^=\'spotify\']').val('')" >Clear</button>
-               </span>
-       </div>
-     </div> <!-- end div tab spotify playlists -->
+    <div id="spotify-playlists" class="container tab-pane fade">
+      <h3>Download Spotify Playlist</h3>
+      <div class="input-group">
+        <input type="text" class="form-control" id="spotify-playlist-name" placeholder="Playlist name" />
+        <input type="text" class="form-control" id="spotify-playlist-url" placeholder="Playlist URL or ID" />
+      </div>
+      <br>
+      <div class="input-group-btn">
+        <button type="button" class="btn btn-info" id="spotify_download_play">Download &amp; Play</button>
+        <button type="button" class="btn btn-info" id="spotify_download">Download</button>
+        <button type="button" class="btn btn-info" id="spotify_zip">Get ZIP</button>
+        <button type="button" class="btn btn-default" onclick="$('input[id^=\'spotify\']').val('')">Clear</button>
+      </div>
+    </div>
 
 
+    <div id="deezer" class="container tab-pane fade">
+      <h3>Download Deezer Playlist</h3>
+      <div class="input-group">
+        <input type="text" class="form-control" id="deezer-playlist-url" placeholder="Playlist URL or ID" />
+      </div>
+      <br>
+      <div class="input-group-btn">
+        <button type="button" class="btn btn-info" id="deezer_playlist_download_play">Download &amp; Play</button>
+        <button type="button" class="btn btn-info" id="deezer_playlist_download">Download</button>
+        <button type="button" class="btn btn-info" id="deezer_playlist_zip">Get ZIP</button>
+        <button type="button" class="btn btn-default" onclick="$('#deezer-playlist-url').val('')">Clear</button>
+      </div>
 
-     <div id="deezer" class="container tab-pane fade">
-       <br>
-       <h3>Download Deezer playlist</h3>
-       <div class="input-group">
-           <input type="text" class="form-control" id="deezer-playlist-url" placeholder="url or id of the playlist" />
-           &nbsp;
-       </div>
-       <br>
-       <div class="input-group">
-               <span class="input-group-btn">
-                   <button type="button" class="btn btn-info" id="deezer_playlist_download_play">Download & Play</button>
-                   <button type="button" class="btn btn-info" id="deezer_playlist_download">Download</button>
-                   <button type="button" class="btn btn-info" id="deezer_playlist_zip">Give me a zip</button>
-                   <button type="button" class="btn btn-info" onclick="$('#deezer-playlist-url').val('')" >Clear</button>
-               </span>
-       </div>
-
-       <br>
-       <h3>Download Deezer favorite songs</h3>
-       <div class="input-group">
-           <input type="text" class="form-control" id="deezer-favorites-userid" placeholder="user id of Deezer user"songs />
-           &nbsp;
-       </div>
-       <br>
-       <div class="input-group">
-               <span class="input-group-btn">
-                   <button type="button" class="btn btn-info" id="deezer_favorites_download_play">Download & Play</button>
-                   <button type="button" class="btn btn-info" id="deezer_favorites_download">Download</button>
-                   <button type="button" class="btn btn-info" id="deezer_favorites_zip">Give me a zip</button>
-                   <button type="button" class="btn btn-info" onclick="$('#deezer-favorites-userid').val('')" >Clear</button>
-               </span>
-       </div>
-
-     </div> <!-- end div tab deezer playlists -->
+      <br><br>
+      <h3>Download Deezer Favorites</h3>
+      <div class="input-group">
+        <input type="text" class="form-control" id="deezer-favorites-userid" placeholder="Deezer user ID" />
+      </div>
+      <br>
+      <div class="input-group-btn">
+        <button type="button" class="btn btn-info" id="deezer_favorites_download_play">Download &amp; Play</button>
+        <button type="button" class="btn btn-info" id="deezer_favorites_download">Download</button>
+        <button type="button" class="btn btn-info" id="deezer_favorites_zip">Get ZIP</button>
+        <button type="button" class="btn btn-default" onclick="$('#deezer-favorites-userid').val('')">Clear</button>
+      </div>
+    </div>
 
 
-     <div id="debug" class="container tab-pane fade">
-       <br>
-       <h3>Debug</h3>
-        <div class="form-group">
-           <textarea readonly class="form-control" id="ta-debug-log"></textarea>
-        </div> <!-- end div textares -->
-     </div> <!-- end div tab debug -->
+    <div id="debug" class="container tab-pane fade">
+      <h3>Debug Log</h3>
+      <div class="form-group">
+        <textarea readonly class="form-control" id="ta-debug-log"></textarea>
+      </div>
+    </div>
+
 
     <div id="queue" class="container tab-pane fade">
-      <br>
-      <h3>Queue</h3>
-
+      <h3>Task Queue</h3>
       <table id="task-list" class="table">
         <thead>
-            <tr>
-                <th>Description</th>
-                <th>Args</th>
-                <th>State</th>
-            </tr>
+          <tr>
+            <th>Description</th>
+            <th>Args</th>
+            <th>State</th>
+          </tr>
         </thead>
-        <tbody>
-        </tbody>
-     </table>
-    </div> <!-- end div tab queue -->
+        <tbody></tbody>
+      </table>
+    </div>
 
+  </div><!-- end tab-content -->
+</div><!-- end container -->
 
-<style>
-html, body, .container, .tab-content, .tab-pane .form-group {
-  height: 95%;
-}
-textarea.form-control {
-  height: 95%;
-}
+<!-- Now-playing bar -->
+<div id="playbar">
+  <span id="playbar-label">Now Playing</span>
+  <div id="now-playing-container"><span id="now-playing"></span></div>
+  <audio src="" controls id="audio_tag"></audio>
+</div>
 
-#werbung:link, #werbung:visited, #werbung:hover, #werbung:active { color: red }
+<script>
+  // Start marquee only when text overflows
+  (function() {
+    var ticker = document.getElementById('now-playing');
+    var container = document.getElementById('now-playing-container');
+    function checkScroll() {
+      if (ticker.scrollWidth > container.clientWidth) {
+        ticker.classList.add('scrolling');
+      } else {
+        ticker.classList.remove('scrolling');
+      }
+    }
+    new MutationObserver(checkScroll).observe(ticker, { childList: true, characterData: true, subtree: true });
+  })();
 
-</style>
+  // Theme toggle
+  (function() {
+    var html    = document.documentElement;
+    var btn     = document.getElementById('theme-toggle');
+    var icon    = btn.querySelector('i');
+    var label   = document.getElementById('theme-label');
 
+    function applyTheme(theme) {
+      if (theme === 'light') {
+        html.setAttribute('data-theme', 'light');
+        icon.className  = 'fa fa-sun-o';
+        label.textContent = 'Day';
+      } else {
+        html.removeAttribute('data-theme');
+        icon.className  = 'fa fa-moon-o';
+        label.textContent = 'Night';
+      }
+    }
 
-</div> <!-- end div container -->
+    var saved = localStorage.getItem('theme') || 'dark';
+    applyTheme(saved);
+
+    btn.addEventListener('click', function() {
+      var next = html.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+      localStorage.setItem('theme', next);
+      applyTheme(next);
+    });
+  })();
+</script>
 
 </body>
 </html>
-
