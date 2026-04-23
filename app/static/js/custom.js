@@ -49,11 +49,11 @@ $(document).ready(function() {
                 $.jGrowl("As you wish", { life: 4000 });
             });
     }
-    
-    
+
+
     function spotify_playlist_download(add_to_playlist, create_zip) {
         $.post(deezer_downloader_api_root + '/playlist/spotify',
-            JSON.stringify({ playlist_name: $('#spotify-playlist-name').val(), 
+            JSON.stringify({ playlist_name: $('#spotify-playlist-name').val(),
                              playlist_url: $('#spotify-playlist-url').val(),
                              add_to_playlist: add_to_playlist,
                              create_zip: create_zip}),
@@ -101,29 +101,34 @@ $(document).ready(function() {
                 for (var i = 0; i < data.length; i++) {
                     drawTableEntry(data[i], type);
                 }
+                $("#results-count").text(data.length + " track" + (data.length !== 1 ? "s" : "") + " found");
         });
     }
 
     function drawTableEntry(rowData, mtype) {
 
         var row = $("<tr>");
-        $("#results").append(row); 
+        $("#results").append(row);
         row.append($("<td><a href=\"" + rowData.big_img_url + "\" target=\"_art\"><img src='"+rowData.img_url+"'></img></a></td>"));
         row.append($("<td>"+rowData.id+"</td>"));
         row.append($("<td><a href=\"" + rowData.link + "?autoplay=true\" target=\"_deezer\">" + rowData.title + "</a></td>"));
-        row.append($("<td>" + rowData.artist + "</td>"));        
+        row.append($("<td>" + rowData.artist + "</td>"));
         row.append($("<td>" + rowData.album + "</td>"));
         row.append($("<td>" + rowData.duration + "</td>"));
 
-        
+
         if (rowData.preview_url) {
             row.append($('<td> <button class="btn btn-default" onclick="play_preview(\'' + rowData.preview_url + '\', \'' + rowData.title.replace(/'/g, "\\'") + '\', \'' + rowData.artist.replace(/'/g, "\\'") + '\');" > <i class="fa fa-headphones fa-lg" title="listen preview in browser" ></i> </button> </td>'));
         }
-        
+
         if (mtype == "album") {
             row.append($('<td> <button class="btn btn-default"> <i class="fa fa-list fa-lg" title="list album songs" ></i> </button> </td>').click(function() {deezer_load_list("album_track", ""+rowData.album_id + "")}));
         }
-        
+
+        if (mtype == "artist") {
+            row.append($('<td> <button class="btn btn-default"> <i class="fa fa-list fa-lg" title="list top tracks" ></i> </button> </td>').click(function() {deezer_load_list("artist_track", ""+rowData.id + "")}));
+        }
+
         if(show_mpd_features) {
         row.append($('<td> <button class="btn btn-default" onclick="deezer_download(\'' +
                      rowData.id  + '\', \''+ rowData.id_type +
@@ -131,12 +136,12 @@ $(document).ready(function() {
         }
 
         row.append($('<td> <button class="btn btn-default" onclick="deezer_download(\'' +
-                   rowData.id  + '\', \''+ rowData.id_type + 
+                   rowData.id  + '\', \''+ rowData.id_type +
                    '\', false, false);" > <i class="fa fa-download fa-lg" title="download" ></i> </button> </td>'));
 
         if(rowData.id_type == "album") {
             row.append($('<td> <button class="btn btn-default" onclick="deezer_download(\'' +
-                       rowData.id  + '\', \''+ rowData.id_type + 
+                       rowData.id  + '\', \''+ rowData.id_type +
                        '\', false, true);" > <i class="fa fa-file-archive-o fa-lg" title="download as zip file" ></i> </button> </td>'));
         }
     }
@@ -155,7 +160,7 @@ $(document).ready(function() {
         $.get(deezer_downloader_api_root + '/queue', function(data) {
             var queue_table = $("#task-list tbody");
             queue_table.html("");
-            
+
             for (var i = data.length - 1; i >= 0; i--) {
                 var html="<tr><td>"+data[i].description+"</td><td>"+JSON.stringify(data[i].args)+"</td>"+
                 "<td>"+data[i].state+"</td></tr>";
@@ -177,22 +182,22 @@ $(document).ready(function() {
         search("track");
     });
 
-    $("#search_album").click(function() {
-        search("album");
+    $("#search_artist").click(function() {
+        search("artist_track");
     });
-    
+
     $("#search_playlist").click(function() {
         search("playlist");
     });
-    
+
     $("#yt_download").click(function() {
         youtubedl_download(false);
     });
-    
+
     $("#yt_download_play").click(function() {
         youtubedl_download(true);
     });
-    
+
     $("#nav-debug-log").click(function() {
         show_debug_log();
     });
@@ -215,7 +220,7 @@ $(document).ready(function() {
     });
     // END SPOTIFY
 
-    
+
     // BEGIN DEEZER PLAYLIST
     $("#deezer_playlist_download_play").click(function() {
         deezer_playlist_download(true, false);
@@ -246,7 +251,7 @@ $(document).ready(function() {
 
 
     function show_tab(id_nav, id_content) {
-    // nav 
+    // nav
     $(".nav-link").removeClass("active")
     //$("#btn-show-debug").addClass("active")
     $("#" + id_nav).addClass("active")
@@ -309,6 +314,6 @@ $(document).ready(function() {
                }
            }
         }
-            
+
     };
 });

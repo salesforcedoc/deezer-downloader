@@ -22,6 +22,8 @@ TYPE_TRACK = "track"
 TYPE_ALBUM = "album"
 TYPE_PLAYLIST = "playlist"
 TYPE_ALBUM_TRACK = "album_track" # used for listing songs of an album
+TYPE_ARTIST = "artist"
+TYPE_ARTIST_TRACK = "artist_track" # used for listing top tracks of an artist
 # END TYPES
 
 session = None
@@ -217,7 +219,7 @@ def writeid3v2(fo, song):
     def song_getz(song, key):
         try:
             if key == "SNG_TITLE":
-                return song[key] + ' ' + song["VERSION"] 
+                return song[key] + ' ' + song["VERSION"]
             else:
                 return song[key]
         except:
@@ -250,7 +252,7 @@ def writeid3v2(fo, song):
         # 0x11     A bright coloured fish
         # 0x12     Illustration
         # 0x13     Band/artist logotype
-        # 0x14     Publisher/Studio logotype        
+        # 0x14     Publisher/Studio logotype
         imgframe = (b"\x00",                 # text encoding
                     b"image/jpeg", b"\0",    # mime type
                     b"\x03",                 # picture type: 'Cover (front)'
@@ -292,7 +294,7 @@ def writeid3v2(fo, song):
     try:
         digitalRelDate_YYYY = album_get("DIGITAL_RELEASE_DATE")[:4]
     except:
-        digitalRelDate_YYYY = ''        
+        digitalRelDate_YYYY = ''
 
     # http://id3.org/id3v2.3.0#Attached_picture
     id3 = [
@@ -340,7 +342,7 @@ def writeid3v2(fo, song):
     fo.write(hdr)
     fo.write(id3data)
 
- 
+
 def download_song(song, output_file, track_url=None):
     # downloads and decrypts the song from Deezer. Adds ID3 and art cover
     # song: dict with information of the song (grabbed from Deezer.com)
@@ -352,7 +354,7 @@ def download_song(song, output_file, track_url=None):
                    3 if song.get("FILESIZE_MP3_320") else \
                    5 if song.get("FILESIZE_MP3_256") else \
                    1
-                   
+
     #print("Download song: '{}'".format(song))
     #print("Download quality: '{}'".format(song_quality))
 
@@ -432,7 +434,7 @@ def deezer_search(search, search_type):
     # search_type: either one of the constants: TYPE_TRACK|TYPE_ALBUM|TYPE_ALBUM_TRACK (TYPE_PLAYLIST is not supported)
     # return: list of dicts (keys depend on search_type)
 
-    if search_type not in [TYPE_TRACK, TYPE_ALBUM, TYPE_ALBUM_TRACK, TYPE_PLAYLIST]:
+    if search_type not in [TYPE_TRACK, TYPE_ALBUM, TYPE_ALBUM_TRACK, TYPE_PLAYLIST, TYPE_ARTIST, TYPE_ARTIST_TRACK]:
         print("ERROR: search_type is wrong: {}".format(search_type))
         return []
     search = urllib.parse.quote_plus(search)
@@ -445,13 +447,30 @@ def deezer_search(search, search_type):
         resp = resp['data']
         print("https://api.deezer.com/playlist/{}".format(search))
         print('Response: ', resp);
+    elif search_type == TYPE_ARTIST_TRACK:
+        print('Artist');
+        artists = session.get("https://api.deezer.com/search/artist?q={}".format(search)).json()['data']
+        resp = []
+        for artist in artists:
+            # print the artist name
+            print('Artist: {} ', artist['name']);
+            artist_id = artist['id']
+            artist_name = artist['name'].lower()
+            original_search = urllib.parse.unquote_plus(search).lower()
+            excluded = ['karaoke', 'famous by', 'experience']
+            if original_search not in artist_name or any(e in artist_name for e in excluded):
+                continue
+            print('Artist: getting tracks for {} ', artist['name']);
+            top_tracks = session.get(f"https://api.deezer.com/artist/{artist_id}/top?limit=50").json().get('data', [])
+            resp.extend(top_tracks)
     else:
+        print('Track');
         resp = session.get("https://api.deezer.com/search/{}?q={}".format(search_type, search)).json()['data']
         print("https://api.deezer.com/search/{}?q={}".format(search_type, search))
         print('Response: ', resp);
 
     return_nice = []
-    print('Response: ', resp);
+    # print('Response: ', resp);
     for item in resp:
         print('Item: ', item)
 
@@ -509,6 +528,32 @@ def deezer_search(search, search_type):
                 i['duration'] = strftime("%M:%S", gmtime(item['duration']))
                 i['link'] = item['link']
                 i['preview_url'] = item['preview']
+
+        if search_type == TYPE_ARTIST:
+            i['id'] = str(item['id'])
+            i['id_type'] = TYPE_ARTIST
+            i['title'] = item['name']
+            i['artist'] = item['name']
+            i['album'] = '{} albums'.format(item.get('nb_album', '?'))
+            i['album_id'] = item['id']
+            i['img_url'] = item.get('picture_small', '')
+            i['big_img_url'] = item.get('picture_big', '')
+            i['duration'] = '{:,} fans'.format(item.get('nb_fan', 0))
+            i['link'] = item['link']
+            i['preview_url'] = ''
+
+        if search_type == TYPE_ARTIST_TRACK:
+            i['id'] = str(item['id'])
+            i['id_type'] = TYPE_TRACK
+            i['title'] = item['title']
+            i['img_url'] = item['album']['cover_small']
+            i['big_img_url'] = item['album']['cover_big']
+            i['album'] = item['album']['title']
+            i['album_id'] = item['album']['id']
+            i['artist'] = item['artist']['name']
+            i['duration'] = strftime("%M:%S", gmtime(item['duration']))
+            i['link'] = item['link']
+            i['preview_url'] = item.get('preview', '')
 
         return_nice.append(i)
         # print('Response: ', return_nice)

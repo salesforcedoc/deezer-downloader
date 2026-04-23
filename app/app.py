@@ -29,7 +29,7 @@ def validate_schema(*parameters_to_check):
             if set(j.keys()) != set(parameters_to_check):
                 return jsonify({"error": 'parameters not fitting. Required: {}'.format(parameters_to_check)}), 400
             if "type" in j.keys():
-                if j['type'] not in ["album", "track", "album_track", "playlist"]:
+                if j['type'] not in ["album", "track", "album_track", "playlist", "artist_track"]:
                     return jsonify({"error": "type must be album, track, album_track or playlist"}), 400
             if "music_id" in j.keys():
                 if type(j['music_id']) != int:
@@ -85,7 +85,7 @@ def find():
                            api_root=config["http"]["api_root"],
                            static_root=config["http"]["static_root"],
                            use_mpd=str(config['mpd'].getboolean('use_mpd')).lower())
-         
+
 
 @app.route("/debug")
 def show_debug():
