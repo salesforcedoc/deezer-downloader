@@ -25,9 +25,10 @@ function deezer_download(music_id, type, add_to_playlist, create_zip) {
 }
 
 
-function play_preview(src) {
+function play_preview(src, title, artist) {
     $("#audio_tag")[0].volume = 0.5;
     $("#audio_tag").attr("src", src)[0].play();
+    $("#now-playing").text(title && artist ? artist + " — " + title : title || "");
 }
 
 $(document).ready(function() {
@@ -116,7 +117,7 @@ $(document).ready(function() {
 
         
         if (rowData.preview_url) {
-            row.append($('<td> <button class="btn btn-default" onclick="play_preview(\'' + rowData.preview_url + '\');" > <i class="fa fa-headphones fa-lg" title="listen preview in browser" ></i> </button> </td>'));
+            row.append($('<td> <button class="btn btn-default" onclick="play_preview(\'' + rowData.preview_url + '\', \'' + rowData.title.replace(/'/g, "\\'") + '\', \'' + rowData.artist.replace(/'/g, "\\'") + '\');" > <i class="fa fa-headphones fa-lg" title="listen preview in browser" ></i> </button> </td>'));
         }
         
         if (mtype == "album") {
