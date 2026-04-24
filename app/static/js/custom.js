@@ -25,13 +25,35 @@ function deezer_download(music_id, type, add_to_playlist, create_zip) {
 }
 
 
+var currentPreviewUrl = null;
+
 function play_preview(src, title, artist) {
-    $("#audio_tag")[0].volume = 0.5;
-    $("#audio_tag").attr("src", src)[0].play();
-    $("#now-playing").text(title && artist ? artist + " — " + title : title || "");
+    var audio = $("#audio_tag")[0];
+    if (currentPreviewUrl === src) {
+        if (audio.paused) { audio.play(); } else { audio.pause(); }
+    } else {
+        currentPreviewUrl = src;
+        audio.volume = 0.5;
+        $("#audio_tag").attr("src", src)[0].play();
+        $("#now-playing").text(title && artist ? artist + " — " + title : title || "");
+    }
 }
 
 $(document).ready(function() {
+
+    $("#audio_tag").on('play', function() {
+        $('.preview-btn i').removeClass('fa-pause').addClass('fa-headphones');
+        if (currentPreviewUrl) {
+            $('.preview-btn[data-preview-url="' + currentPreviewUrl + '"] i')
+                .removeClass('fa-headphones').addClass('fa-pause');
+        }
+    });
+
+    $("#audio_tag").on('pause', function() {
+        $('.preview-btn[data-preview-url="' + currentPreviewUrl + '"] i')
+            .removeClass('fa-pause').addClass('fa-headphones');
+        if (this.ended) currentPreviewUrl = null;
+    });
 
     if(!show_mpd_features) {
         $("#yt_download_play").hide()
@@ -118,7 +140,7 @@ $(document).ready(function() {
 
 
         if (rowData.preview_url) {
-            row.append($('<td> <button class="btn btn-default" onclick="play_preview(\'' + rowData.preview_url + '\', \'' + rowData.title.replace(/'/g, "\\'") + '\', \'' + rowData.artist.replace(/'/g, "\\'") + '\');" > <i class="fa fa-headphones fa-lg" title="listen preview in browser" ></i> </button> </td>'));
+            row.append($('<td> <button class="btn btn-default preview-btn" data-preview-url="' + rowData.preview_url + '" onclick="play_preview(\'' + rowData.preview_url + '\', \'' + rowData.title.replace(/'/g, "\\'") + '\', \'' + rowData.artist.replace(/'/g, "\\'") + '\');" > <i class="fa fa-headphones fa-lg" title="listen preview in browser" ></i> </button> </td>'));
         }
 
         if (mtype == "album") {
