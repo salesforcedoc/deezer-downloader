@@ -130,6 +130,7 @@ async fn search(
         return Err(ApiError::bad("query is empty"));
     }
     let allowed = [
+        "all",
         "track",
         "album",
         "album_track",

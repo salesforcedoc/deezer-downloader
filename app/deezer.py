@@ -499,9 +499,14 @@ def deezer_search(search, search_type):
     # search_type: either one of the constants: TYPE_TRACK|TYPE_ALBUM|TYPE_ALBUM_TRACK (TYPE_PLAYLIST is not supported)
     # return: list of dicts (keys depend on search_type)
 
-    if search_type not in [TYPE_TRACK, TYPE_ALBUM, TYPE_ALBUM_TRACK, TYPE_PLAYLIST, TYPE_ARTIST, TYPE_ARTIST_TRACK]:
+    if search_type not in [TYPE_TRACK, TYPE_ALBUM, TYPE_ALBUM_TRACK, TYPE_PLAYLIST, TYPE_ARTIST, TYPE_ARTIST_TRACK, "all"]:
         print("ERROR: search_type is wrong: {}".format(search_type))
         return []
+    if search_type == "all":
+        results = []
+        for t in [TYPE_TRACK, TYPE_ALBUM, TYPE_ARTIST]:
+            results.extend(deezer_search(search, t))
+        return results
     search = urllib.parse.quote_plus(search)
     print("ERROR: {}".format(search_type))
     if search_type == TYPE_ALBUM_TRACK:
@@ -549,7 +554,8 @@ def deezer_search(search, search_type):
             i['big_img_url'] = item['cover_big']
             i['artist'] = item['artist']['name']
             i['title'] = ''
-            i['duration'] = str(datetime.timedelta(seconds=item['duration']))
+            duration = item.get('duration')
+            i['duration'] = str(datetime.timedelta(seconds=duration)) if duration else ''
             i['link'] = item['link']
             i['preview_url'] = ''
 
@@ -567,7 +573,7 @@ def deezer_search(search, search_type):
             i['preview_url'] = item['preview']
 
         if search_type == TYPE_ALBUM_TRACK:
-            if item['id'] > 0:
+            if item.get('SNG_ID'):
                 i['id'] = str(item['SNG_ID'])
                 i['id_type'] = TYPE_TRACK
                 i['title'] = item['SNG_TITLE']
@@ -576,9 +582,11 @@ def deezer_search(search, search_type):
                 i['album'] = item['ALB_TITLE']
                 i['album_id'] = item['ALB_ID']
                 i['artist'] = item['ART_NAME']
-                i['duration'] = str(datetime.timedelta(seconds=item['duration']))
-                i['link'] = item['link']
-                i['preview_url'] = next(media['HREF'] for media in item['MEDIA'] if media['TYPE'] == 'preview')
+                duration = item.get('DURATION') or item.get('duration')
+                i['duration'] = str(datetime.timedelta(seconds=int(duration))) if duration else ''
+                i['link'] = item.get('link', 'https://www.deezer.com/track/{}'.format(item['SNG_ID']))
+                previews = [media['HREF'] for media in item.get('MEDIA', []) if media.get('TYPE') == 'preview']
+                i['preview_url'] = previews[0] if previews else ''
 
         if search_type == TYPE_PLAYLIST:
             if item['id'] > 0:

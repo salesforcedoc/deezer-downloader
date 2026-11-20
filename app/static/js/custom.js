@@ -102,13 +102,13 @@ $(document).ready(function() {
             function(data) {
                 $("#results > tbody").html("");
                 for (var i = 0; i < data.length; i++) {
-                    drawTableEntry(data[i], type);
+                    drawTableEntry(data[i]);
                 }
-                $("#results-count").text(data.length + " track" + (data.length !== 1 ? "s" : "") + " found");
+                $("#results-count").text(data.length + " result" + (data.length !== 1 ? "s" : "") + " found");
         });
     }
 
-    function drawTableEntry(rowData, mtype) {
+    function drawTableEntry(rowData) {
 
         var row = $("<tr>");
         $("#results").append(row);
@@ -124,11 +124,11 @@ $(document).ready(function() {
             row.append($('<td> <button class="btn btn-default preview-btn" data-preview-url="' + rowData.preview_url + '" onclick="play_preview(\'' + rowData.preview_url + '\', \'' + rowData.title.replace(/'/g, "\\'") + '\', \'' + rowData.artist.replace(/'/g, "\\'") + '\');" > <i class="fa fa-headphones fa-lg" title="listen preview in browser" ></i> </button> </td>'));
         }
 
-        if (mtype == "album") {
+        if (rowData.id_type == "album") {
             row.append($('<td> <button class="btn btn-default"> <i class="fa fa-list fa-lg" title="list album songs" ></i> </button> </td>').click(function() {deezer_load_list("album_track", ""+rowData.album_id + "")}));
         }
 
-        if (mtype == "artist") {
+        if (rowData.id_type == "artist") {
             row.append($('<td> <button class="btn btn-default"> <i class="fa fa-list fa-lg" title="list top tracks" ></i> </button> </td>').click(function() {deezer_load_list("artist_track", ""+rowData.id + "")}));
         }
 
@@ -180,6 +180,10 @@ $(document).ready(function() {
             }
         });
     }
+
+    $("#search_all").click(function() {
+        search("all");
+    });
 
     $("#search_track").click(function() {
         search("track");
@@ -250,7 +254,7 @@ $(document).ready(function() {
                search("album");
            }  else if (event.key === 'Enter' ) {
                console.log("pressed Enter");
-               search("track");
+               search("all");
            } else if (event.key === 'm' && event.ctrlKey) {
               console.log("pressed ctrl m");
               $("#songs-albums-query")[0].value = "";

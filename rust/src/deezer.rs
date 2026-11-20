@@ -478,6 +478,23 @@ impl Deezer {
         let encoded = urlencoding::encode(query);
 
         match kind {
+            "all" => {
+                let tracks: ApiPage<ApiTrack> = self
+                    .get_json(&format!("https://api.deezer.com/search/track?q={encoded}"))
+                    .await?;
+                let albums: ApiPage<ApiAlbumItem> = self
+                    .get_json(&format!("https://api.deezer.com/search/album?q={encoded}"))
+                    .await?;
+                let artists: ApiPage<ApiArtistItem> = self
+                    .get_json(&format!("https://api.deezer.com/search/artist?q={encoded}"))
+                    .await?;
+
+                let mut items = Vec::new();
+                items.extend(tracks.data.iter().map(track_item));
+                items.extend(albums.data.iter().map(album_item));
+                items.extend(artists.data.iter().map(artist_item));
+                Ok(items)
+            }
             "track" => {
                 let page: ApiPage<ApiTrack> = self
                     .get_json(&format!("https://api.deezer.com/search/track?q={encoded}"))
@@ -587,7 +604,11 @@ fn album_item(album: &ApiAlbumItem) -> SearchItem {
             .unwrap_or_default(),
         img_url: album.cover_small.clone().unwrap_or_default(),
         big_img_url: album.cover_big.clone().unwrap_or_default(),
-        duration: format_duration(album.duration),
+        duration: if album.duration > 0 {
+            format_duration(album.duration)
+        } else {
+            String::new()
+        },
         link: album.link.clone().unwrap_or_default(),
         preview_url: String::new(),
     }
