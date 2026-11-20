@@ -4,16 +4,30 @@
 
 ### Features
 
-- download songs, albums, public playlists from Deezer.com (account is required, free plan is enough)
-- download Spotify playlists (by parsing the Spotify website and download the songs from Deezer)
+- download songs, albums, public playlists and favorites from Deezer.com (account is required, free plan is enough)
 - download as zip file (including m3u8 playlist file)
-- 320 kbit/s mp3s with ID3-Tags and album cover (or flac if you want)
-- download songs via youtube-dl
+- 320 kbit/s mp3s with ID3-Tags and album cover
 - KISS front end
 - MPD integration (use it on a Raspberry Pi!)
 - simple REST api
 
+### Rust version
 
+There is a Rust port in [`rust/`](rust/README.md) with the same local web UI and
+REST API. It builds to a single binary and supports Deezer tracks, albums,
+playlists and favorites. It does not include Spotify, youtube-dl, the Files
+browser, MPD or FLAC.
+
+```bash
+./start-rust.sh
+```
+
+This starts on the same port as the Python app (`5000`), so stop the Python
+instance first or run it with a different port:
+
+```bash
+PORT=5001 ./start-rust.sh
+```
 
 ### How to use it
 

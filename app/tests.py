@@ -5,8 +5,6 @@ import magic
 from deezer import deezer_search, get_song_infos_from_deezer_website, parse_deezer_playlist, download_song, get_deezer_favorites
 from deezer import TYPE_TRACK, TYPE_ALBUM
 from deezer import Deezer404Exception, DeezerApiException
-from spotify import get_songs_from_spotify_website, SpotifyWebsiteParserException, parse_uri, SpotifyInvalidUrlException
-from youtubedl import youtubedl_download, YoutubeDLFailedException
 
 from configuration import config
 
@@ -233,87 +231,6 @@ class TestDeezerMethods(unittest.TestCase):
             download_song("this sould be a dict", test_song)
 
     # END: download_song
-
-
-class TestSpotifyMethods(unittest.TestCase):
-    def test_parse_url_spotify(self):
-        res = parse_uri("spotify:album:Hksdhfaif23ffushef9823")
-        self.assertEqual(res['type'], "album")
-        self.assertEqual(res['id'], "Hksdhfaif23ffushef9823")
-
-        res = parse_uri("spotify:playlist:Hksdhfaif23ffushef9823")
-        self.assertEqual(res['type'], "playlist")
-        self.assertEqual(res['id'], "Hksdhfaif23ffushef9823")
-
-        res = parse_uri("spotify:track:Hksdhfaif23ffushef9823")
-        self.assertEqual(res['type'], "track")
-        self.assertEqual(res['id'], "Hksdhfaif23ffushef9823")
-
-    def test_parse_url_open_domain(self):
-        res = parse_uri("https://open.spotify.com/track/Hksdhfaif23ffushef9823")
-        self.assertEqual(res['type'], "track")
-        self.assertEqual(res['id'], "Hksdhfaif23ffushef9823")
-
-    def test_parse_url_play_domain(self):
-        res = parse_uri("https://play.spotify.com/track/Hksdhfaif23ffushef9823")
-        self.assertEqual(res['type'], "track")
-        self.assertEqual(res['id'], "Hksdhfaif23ffushef9823")
-
-    def test_parse_url_embed_domain(self):
-        res = parse_uri("https://embed.spotify.com/?uri=spotify:track:Hksdhfaif23ffushef9823")
-        self.assertEqual(res['type'], "track")
-        self.assertEqual(res['id'], "Hksdhfaif23ffushef9823")
-
-    def _test_parse_spotify_playlist_website(self, playlist):
-        songs = get_songs_from_spotify_website(playlist)
-        self.assertIn("Cyndi Lauper Time After Time", songs)
-
-    def test_spotify_parser_valid_playlist_embed_url(self):
-        playlist_url = "https://open.spotify.com/embed/playlist/0wl9Q3oedquNlBAJ4MGZtS"
-        self._test_parse_spotify_playlist_website(playlist_url)
-
-    def test_spotify_parser_valid_playlist_url(self):
-        playlist_url = "https://open.spotify.com/playlist/0wl9Q3oedquNlBAJ4MGZtS"
-        self._test_parse_spotify_playlist_website(playlist_url)
-
-    def test_spotify_parser_valid_playlist_id(self):
-        playlist_id = "0wl9Q3oedquNlBAJ4MGZtS"
-        self._test_parse_spotify_playlist_website(playlist_id)
-
-    def test_spotify_parser_invalid_playlist_id(self):
-        playlist_id = "thisdoesnotexist"
-        with self.assertRaises(SpotifyWebsiteParserException):
-            get_songs_from_spotify_website(playlist_id)
-
-    def test_spotify_parser_invalid_playlist_url(self):
-        playlist_url = "https://www.heise.de"
-        with self.assertRaises(SpotifyInvalidUrlException):
-            get_songs_from_spotify_website(playlist_url)
-
-
-class TestYoutubeMethods(unittest.TestCase):
-
-    def test_youtube_dl_valid_url(self):
-        url = "https://www.youtube.com/watch?v=ZbZSe6N_BXs"
-        destination_file = youtubedl_download(url, "/tmp")
-        file_exists = os.path.exists(destination_file)
-        self.assertEqual(file_exists, True)
-        file_type = magic.from_file(destination_file)
-        os.remove(destination_file)
-        # I test this in two seperate lines because on Ubuntu 18.04, there is an additional space in it (I don't know why. Different ffmpeg package?)
-        self.assertIn("Audio file with ID3 version 2.4.0, contains:MPEG ADTS, layer III", file_type)
-        self.assertIn("64 kbps, 44.1 kHz, Stereo", file_type)
-
-    def test_youtube_dl_invalid_url(self):
-        url = "https://www.heise.de"
-        with self.assertRaises(YoutubeDLFailedException):
-            youtubedl_download(url, "/tmp")
-
-    def test_youtube_dl_command_execution(self):
-        url = "https://www.youtube.com/watch?v=ZbZSe6N_BXs&$(touch /tmp/pwned.txt)"
-        youtubedl_download(url, "/tmp")
-        pwn_succeeded = os.path.exists("/tmp/pwned.txt")
-        self.assertEqual(pwn_succeeded, False)
 
 
 if __name__ == '__main__':

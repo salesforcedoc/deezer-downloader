@@ -1,4 +1,11 @@
 
+// The API expects JSON; jQuery's $.post defaults to form encoding.
+$.ajaxPrefilter(function(options) {
+    if (options.type && options.type.toUpperCase() === 'POST') {
+        options.contentType = 'application/json';
+    }
+});
+
 function deezer_download(music_id, type, add_to_playlist, create_zip) {
     $.post(deezer_downloader_api_root + '/download',
         JSON.stringify({ type: type, music_id: parseInt(music_id), add_to_playlist: add_to_playlist, create_zip: create_zip}),
@@ -56,35 +63,9 @@ $(document).ready(function() {
     });
 
     if(!show_mpd_features) {
-        $("#yt_download_play").hide()
-        $("#spotify_download_play").hide()
         $("#deezer_playlist_download_play").hide()
         $("#deezer_favorites_download_play").hide()
     };
-
-
-    function youtubedl_download(add_to_playlist) {
-        $.post(deezer_downloader_api_root + '/youtubedl',
-            JSON.stringify({ url: $('#youtubedl-query').val(), add_to_playlist: add_to_playlist }),
-            function(data) {
-                console.log(data);
-                $.jGrowl("As you wish", { life: 4000 });
-            });
-    }
-
-
-    function spotify_playlist_download(add_to_playlist, create_zip) {
-        $.post(deezer_downloader_api_root + '/playlist/spotify',
-            JSON.stringify({ playlist_name: $('#spotify-playlist-name').val(),
-                             playlist_url: $('#spotify-playlist-url').val(),
-                             add_to_playlist: add_to_playlist,
-                             create_zip: create_zip}),
-            function(data) {
-                console.log(data);
-                $.jGrowl("As you wish", { life: 4000 });
-            });
-    }
-
 
 
     function deezer_playlist_download(add_to_playlist, create_zip) {
@@ -212,14 +193,6 @@ $(document).ready(function() {
         search("playlist");
     });
 
-    $("#yt_download").click(function() {
-        youtubedl_download(false);
-    });
-
-    $("#yt_download_play").click(function() {
-        youtubedl_download(true);
-    });
-
     $("#nav-debug-log").click(function() {
         show_debug_log();
     });
@@ -227,21 +200,6 @@ $(document).ready(function() {
     $("#nav-task-queue").click(function() {
         show_task_queue();
     });
-
-    // BEGIN SPOTIFY
-    $("#spotify_download_play").click(function() {
-        spotify_playlist_download(true, false);
-    });
-
-    $("#spotify_download").click(function() {
-        spotify_playlist_download(false, false);
-    });
-
-    $("#spotify_zip").click(function() {
-        spotify_playlist_download(false, true);
-    });
-    // END SPOTIFY
-
 
     // BEGIN DEEZER PLAYLIST
     $("#deezer_playlist_download_play").click(function() {
@@ -280,7 +238,6 @@ $(document).ready(function() {
 
     // content
     $(".container .tab-pane").removeClass("active show")
-    //$("#youtubedl").addClass("active show")
     $("#" + id_content).addClass("active show")
     }
 
@@ -305,22 +262,9 @@ $(document).ready(function() {
                    id_nav = "nav-songs-albums";
                    id_content = "songs_albums";
                }
-               if(event.key === '"') {
-                   id_nav = "nav-youtubedl";
-                   id_content = "youtubedl";
-               }
-               if(event.key === '§') {
-                   id_nav = "nav-spotify-playlists";
-                   id_content = "spotify-playlists";
-               }
                if(event.key === '$') {
-                   id_nav = "nav-deezer-playlists";
-                   id_content = "deezer-playlists";
-               }
-               if(event.key === '%') {
-                   id_nav = "nav-songs-albums";
-                   id_content = "songs_albums";
-                   window.open('/downloads/', '_blank');
+                   id_nav = "nav-deezer";
+                   id_content = "deezer";
                }
                if(event.key === "&") {
                    id_nav = "nav-debug-log";

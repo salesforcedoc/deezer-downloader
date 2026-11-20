@@ -13,16 +13,12 @@ if not os.path.exists(config_abs):
 config = ConfigParser()
 config.read(config_abs)
 
-assert list(config.keys()) == ['DEFAULT', 'mpd', 'download_dirs', 'debug', 'http', 'threadpool', 'deezer', 'youtubedl'], f"Validating settings.ini failed. Check {__file__}"
+assert list(config.keys()) == ['DEFAULT', 'mpd', 'download_dirs', 'debug', 'http', 'threadpool', 'deezer'], f"Validating settings.ini failed. Check {__file__}"
 
 if config['mpd'].getboolean('use_mpd'):
     if not config['mpd']['music_dir_root'].startswith(config['download_dirs']['base']):
         print("ERROR: base download dir must be a subdirectory of the mpd music_dir_root")
         sys.exit(1)
-
-if not os.path.exists(config['youtubedl']['command']):
-    print(f"ERROR: youtube-dl not found at {config['youtubedl']['command']}")
-    sys.exit(1)
 
 if "DEEZER_FLAC_QUALITY" in os.environ.keys():
     config["deezer"]["flac_quality"] = os.environ["DEEZER_FLAC_QUALITY"]

@@ -6,9 +6,7 @@ import platform
 from zipfile import ZipFile, ZIP_DEFLATED
 
 from configuration import config
-from youtubedl import youtubedl_download
-from spotify import get_songs_from_spotify_website
-from deezer import TYPE_TRACK, TYPE_ALBUM, TYPE_PLAYLIST, get_song_infos_from_deezer_website, download_song, parse_deezer_playlist, deezer_search, get_deezer_favorites
+from deezer import TYPE_TRACK, TYPE_ALBUM, TYPE_PLAYLIST, get_song_infos_from_deezer_website, download_song, parse_deezer_playlist, get_deezer_favorites
 from deezer import Deezer403Exception, Deezer404Exception
 
 from threadpool_queue import ThreadpoolScheduler, report_progress
@@ -17,7 +15,7 @@ sched = ThreadpoolScheduler()
 
 def check_download_dirs_exist():
     for directory in [config["download_dirs"]["songs"], config["download_dirs"]["zips"], config["download_dirs"]["albums"],
-                      config["download_dirs"]["playlists"], config["download_dirs"]["youtubedl"]]:
+                      config["download_dirs"]["playlists"]]:
         os.makedirs(directory, exist_ok=True)
 
 
@@ -81,9 +79,9 @@ def song_getx(song, key):
 def download_song_and_get_absolute_filename(search_type, song, playlist_name=None, track_url=None):
     if song_getx(song, 'VERSION') != '' and song_getx(song, 'VERSION') != None:
         print ("Version: ", song_getx(song, 'VERSION'))
-        song_filename = "{} - {} {}.{}".format(song['ART_NAME'], song['SNG_TITLE'], song_getx(song, 'VERSION'), 'flac' if config['deezer'].getboolean('flac_quality') else 'mp3')
+        song_filename = "{} - {} {}.mp3".format(song['ART_NAME'], song['SNG_TITLE'], song_getx(song, 'VERSION'))
     else:
-        song_filename = "{} - {}.{}".format(song['ART_NAME'], song['SNG_TITLE'], 'flac' if config['deezer'].getboolean('flac_quality') else 'mp3')
+        song_filename = "{} - {}.mp3".format(song['ART_NAME'], song['SNG_TITLE'])
     print ("Songname: ", song_filename)
     song_filename = clean_filename(song_filename)
 
@@ -183,37 +181,6 @@ def download_deezer_playlist_and_queue_and_zip(playlist_id, add_to_playlist, cre
 
 
 @sched.register_command()
-def download_spotify_playlist_and_queue_and_zip(playlist_name, playlist_id, add_to_playlist, create_zip):
-    songs = get_songs_from_spotify_website(playlist_id)
-    songs_absolute_location = []
-    print(f"We got {len(songs)} songs from the Spotify playlist")
-    for i, song_of_playlist in enumerate(songs):
-        report_progress(i, len(songs))
-        # song_of_playlist: string (artist - song)
-        try:
-            track_id = deezer_search(song_of_playlist, TYPE_TRACK)[0]['id'] #[0] can throw IndexError
-            song = get_song_infos_from_deezer_website(TYPE_TRACK, track_id)
-            absolute_filename = download_song_and_get_absolute_filename(TYPE_PLAYLIST, song, playlist_name)
-            songs_absolute_location.append(absolute_filename)
-        except (IndexError, Deezer403Exception, Deezer404Exception) as msg:
-            print(msg)
-            print(f"Could not find Spotify song ({song_of_playlist}) on Deezer?")
-            # return
-    update_mpd_db(songs_absolute_location, add_to_playlist)
-    songs_with_m3u8_file = create_m3u8_file(songs_absolute_location)
-    if create_zip:
-        return [create_zip_file(songs_with_m3u8_file)]
-    return make_song_paths_relative_to_mpd_root(songs_absolute_location)
-
-
-@sched.register_command()
-def download_youtubedl_and_queue(video_url, add_to_playlist):
-    filename_absolute = youtubedl_download(video_url, config["download_dirs"]["youtubedl"])
-    update_mpd_db(filename_absolute, add_to_playlist)
-    return make_song_paths_relative_to_mpd_root([filename_absolute])
-
-
-@sched.register_command()
 def download_deezer_favorites(user_id: str, add_to_playlist: bool, create_zip: bool):
     songs_absolute_location = []
     output_directory = f"favorites_{user_id}"
@@ -236,4 +203,3 @@ def download_deezer_favorites(user_id: str, add_to_playlist: bool, create_zip: b
 
 if __name__ == '__main__':
     pass
-    #download_spotify_playlist_and_queue_and_zip("test", '21wZXvtrERELL0bVtKtuUh', False, False)

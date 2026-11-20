@@ -1,6 +1,7 @@
 import sys
 import re
 import json
+import time
 import datetime
 from time import strftime
 from time import gmtime
@@ -343,6 +344,63 @@ def writeid3v2(fo, song):
     fo.write(id3data)
 
 
+_license_cache = {"license_token": None, "csrf_token": None, "fetched_at": 0}
+_LICENSE_CACHE_SECONDS = 30 * 60
+
+
+def get_license_token_and_csrf_token():
+    # fetch the license token and the csrf (checkForm) token of the current session.
+    # the license token is needed to ask media.deezer.com for a playable (signed) stream url.
+    now = time.time()
+    if _license_cache["license_token"] and now - _license_cache["fetched_at"] < _LICENSE_CACHE_SECONDS:
+        return _license_cache["license_token"], _license_cache["csrf_token"]
+
+    url = "https://www.deezer.com/ajax/gw-light.php?method=deezer.getUserData&input=3&api_version=1.0&api_token="
+    resp = session.post(url)
+    results = resp.json().get("results", {})
+    license_token = results.get("USER", {}).get("OPTIONS", {}).get("license_token")
+    csrf_token = results.get("checkForm")
+    if not license_token or not csrf_token:
+        raise DeezerApiException("ERROR: could not get a license token from Deezer. Is the arl cookie still valid?")
+    _license_cache.update(license_token=license_token, csrf_token=csrf_token, fetched_at=now)
+    return license_token, csrf_token
+
+
+def get_track_token(track_id, csrf_token):
+    url = "https://www.deezer.com/ajax/gw-light.php?method=song.getData&input=3&api_version=1.0&api_token={}".format(csrf_token)
+    resp = session.post(url, json={"sng_id": int(track_id)})
+    track_token = resp.json().get("results", {}).get("TRACK_TOKEN")
+    if not track_token:
+        raise DeezerApiException("ERROR: Deezer did not return a track token for track {}".format(track_id))
+    return track_token
+
+
+def get_stream_url(song):
+    # ask Deezer for the same signed stream url the web player uses.
+    # this replaces the old genurlkey()/e-cdns-proxy url, which Deezer no longer serves.
+    # song: dict with song information (needs SNG_ID), like the one from get_song_infos_from_deezer_website()
+    license_token, csrf_token = get_license_token_and_csrf_token()
+    track_token = get_track_token(song["SNG_ID"], csrf_token)
+    body = {
+        "license_token": license_token,
+        "media": [{"type": "FULL", "formats": [
+            {"cipher": "BF_CBC_STRIPE", "format": "MP3_320"},
+            {"cipher": "BF_CBC_STRIPE", "format": "MP3_128"},
+        ]}],
+        "track_tokens": [track_token],
+    }
+    # only accept gzip/deflate here: requests does not decode brotli (not in requirements.txt)
+    # and this endpoint answers with brotli if asked for it.
+    resp = session.post("https://media.deezer.com/v1/get_url", json=body,
+                        headers={"Accept-Encoding": "gzip, deflate"})
+    try:
+        media = resp.json()["data"][0]["media"][0]
+        return media["sources"][0]["url"]
+    except (KeyError, IndexError, TypeError):
+        raise DeezerApiException("ERROR: could not get a stream url for track {} ({}): {}".format(
+            song.get("SNG_ID"), resp.status_code, resp.text[:200]))
+
+
 def download_song(song, output_file, track_url=None):
     # downloads and decrypts the song from Deezer. Adds ID3 and art cover
     # song: dict with information of the song (grabbed from Deezer.com)
@@ -358,14 +416,21 @@ def download_song(song, output_file, track_url=None):
     #print("Download song: '{}'".format(song))
     #print("Download quality: '{}'".format(song_quality))
 
-    urlkey = genurlkey(song["SNG_ID"], song["MD5_ORIGIN"], song["MEDIA_VERSION"], song_quality)
     key = calcbfkey(song["SNG_ID"])
+
+    if type(track_url) == str:
+        url = track_url
+    else:
+        try:
+            url = get_stream_url(song)
+        except (DeezerApiException, requests.exceptions.RequestException) as e:
+            print(e)
+            print("Falling back to the legacy (genurlkey) url")
+            urlkey = genurlkey(song["SNG_ID"], song["MD5_ORIGIN"], song["MEDIA_VERSION"], song_quality)
+            url = "https://e-cdns-proxy-%s.dzcdn.net/mobile/1/%s" % (song["MD5_ORIGIN"][0], urlkey.decode())
+
     try:
-        url = "https://e-cdns-proxy-%s.dzcdn.net/mobile/1/%s" % (song["MD5_ORIGIN"][0], urlkey.decode())
         print("Download url: '{}'".format(url))
-        if type(track_url) == str:
-            url = track_url
-        print("Download override url: '{}'".format(url))
         fh = session.get(url)
         if fh.status_code != 200:
             # I don't why this happens. to reproduce:

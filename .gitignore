@@ -7,3 +7,5 @@ settings.ini
 *.log
 .vagrant
 .DS_Store
+# Rust build output
+rust/target/
