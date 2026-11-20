@@ -1,179 +1,76 @@
-## Music Downloader  :notes: :headphones: :dancer: :unicorn:
-![tests](https://github.com/kmille/deezer-downloader/workflows/tests/badge.svg) ![push image to dockerhub](https://github.com/kmille/deezer-downloader/workflows/push%20to%20dockerhub/badge.svg) ![docker pulls](https://img.shields.io/docker/pulls/kmille2/deezer-downloader) ![latest tag](https://img.shields.io/github/v/tag/kmille/deezer-downloader?sort=semver) ![Python 3.6](https://img.shields.io/badge/python-%3E=3.6-blue.svg)
+# Deezer Downloader
 
+A local web app for downloading Deezer tracks, albums, public playlists and
+favorites. It is written in Rust and builds to a single binary with the web UI
+embedded.
 
-### Features
+## Features
 
-- download songs, albums, public playlists and favorites from Deezer.com (account is required, free plan is enough)
-- download as zip file (including m3u8 playlist file)
-- 320 kbit/s mp3s with ID3-Tags and album cover
-- KISS front end
-- MPD integration (use it on a Raspberry Pi!)
-- simple REST api
+- Search **All**, tracks, albums, artists and playlists
+- Download tracks, albums, public playlists and a user's favorites
+- 320 kbps MP3 with Blowfish decryption, ID3v2.3/ID3v1 tags and cover art
+- ZIP + `m3u8` for albums, playlists and favorites
+- Task queue with progress and per-task state
 
-### Rust version
+## Requirements
 
-There is a Rust port in [`rust/`](rust/README.md) with the same local web UI and
-REST API. It builds to a single binary and supports Deezer tracks, albums,
-playlists and favorites. It does not include Spotify, youtube-dl, the Files
-browser, MPD or FLAC.
+- Rust 1.85+ (to build)
+- A Deezer account and its `arl` cookie
 
-```bash
-./start-rust.sh
-```
+## Configuration
 
-This starts on the same port as the Python app (`5000`), so stop the Python
-instance first or run it with a different port:
+Copy `settings.ini.example` to `settings.ini` and set:
 
-```bash
-PORT=5001 ./start-rust.sh
-```
+- `[deezer] cookie_arl` — the `arl` cookie from a logged-in deezer.com session
+  (browser devtools → Application/Storage → Cookies → `arl`)
+- `[download_dirs] base` — where downloads are written
+- optionally `[http] port` and `[threadpool] workers`
 
-### How to use it
+`settings.ini` is gitignored. The binary looks for it in the current directory,
+then `../settings.ini`.
 
-There is a settings file template called `settings.ini.example`. You can specify the download directory with  `download_dir`. Pressing the download button only downloads the song/album/playlist. If you set `use_mpd=True` in the `settings.ini` the backend will connect to mpd (localhost:6600) and update the music database. Pressing the play button will download the music. If `use_mpd=True`  is set the mpd database will be updated and the song/album/playlist will be added to the playlist. In `settings.ini` `music_dir` should be the music root location of mpd. The `download_dir` must be a subdirectory of `music_dir`. 
-
-As Deezer sometimes requires a captcha to login the auto login features was removed. Instead you have to manually insert a valid Deezer cookie to the `settings.ini`. The relevant cookie is the `arl` cookie. 
-
-
-
-### Run it as a service
-
-We use it with nginx and [ympd](https://github.com/notandy/ympd) as mpd frontend
-
-- / goes to ympd
-- /d/ goes to the downloader
-
-The deployment directory contains a systemd unit file and a nginx vhost config file. There is also a [patch](https://github.com/kmille/music-ansible/blob/master/roles/ympd/files/fix_header.patch) to add a link to the ympd frontend. The `debug` tab will show you the debug output of the app.
-
-
-
-### Try it out
-
-```bash	
-vagrant up
-vagrant ssh
-sudo vim /opt/deezer/app/settings.ini # insert your Deezer cookie
-/opt/deezer/app/venv/bin/python /opt/deezer/app/app.py # start the backend
-
-# On the host:
-xdg-open http://localhost:5000 # view frontend in the browser
-ncmpcpp -h 127.0.0.1 # try the mpd client
-```
-
-### Docker
-
-You can use the Docker image hosted on [hub.docker.com](https://hub.docker.com/r/kmille2/deezer-downloader). Login into your free Deezer account and grab the `arl` cookie. Then:
+## Build and run
 
 ```bash
-mkdir downloads
-sudo docker run -p 5000:5000 --volume $(pwd)/downloads/:/mnt/deezer-downloader --env DEEZER_COOKIE_ARL=changeme --env DEEZER_FLAC_QUALITY=True kmille2/deezer-downloader:latest 
-xdg-open http://localhost:5000
+cargo build --release --manifest-path rust/Cargo.toml
+./start.sh
 ```
 
-If you want to debug or build it from source: there is a docker-compose file in the docker directory. The `docker/downloads` directory is mounted into the container and will be used as download directory. You have to check the permissions of the `docker/downloads` directory as docker mounts it with the same owner/group/permissions as on the host. The `deezer` user in the docker container has uid 1000. If you also have the uid 1000 then there should be no problem. For debugging: `sudo docker-compose build --force-rm && sudo docker-compose up`
+`start.sh` builds the binary if it is missing, refuses to start if the port is
+already in use, and opens <http://127.0.0.1:5000>.
 
-### Deployment
+You can also run the binary directly:
 
 ```bash
-apt-get update -q
-apt-get install -qy vim tmux git gcc ffmpeg
-apt-get install -qy python3-virtualenv python3-dev
-git clone https://github.com/kmille/deezer-downloader.git /opt/deezer
-python3 -m virtualenv -p python3 ~/deezer/venv
-source ~/deezer/venv/bin/activate
-pip install -r ~/deezer/requirements.txt
-pip install -U youtube-dl
-cp /opt/deezer/app/settings.ini.example /opt/deezer/app/settings.ini
-# Adjust /opt/deezer/app/settings.ini
-/opt/deezer/app/venv/bin/python /opt/deezer/app/app.py
-
-# for mpd
-apt-get install -yq mpd ncmpcpp
-# adjust the file paths in /etc/mpd.conf and settings.ini
-systemctl restart mpd
-ncmpcpp -h 127.0.0.1
+./rust/target/release/deezer-downloader
 ```
 
+Environment overrides:
 
+| Variable | Meaning |
+| --- | --- |
+| `DEEZER_SETTINGS` | Path to an alternative `settings.ini` |
+| `DEEZER_ARL` | Override the ARL cookie |
+| `HOST`, `PORT` | Override `[http] host` / `port` |
+| `NO_OPEN` | Set to any value to skip opening the browser |
 
-### Shortcuts
-ctrl-m: focus search bar  
-Enter: serach for songs   
-Alt+Enter: search for albums  
-ctrl-b: go to / (this is where our ympd is)  
-ctrl-shift-[1-7] switch tabs    
-
-
-
-### Some screenshots
-
-Search for songs. You can listen to a 30 second preview in the browser.  
-
-![](/screenshots/2020-05-13-211356_screenshot.png)  
-
-Search for albums. You can download them as zip file.  
-
-![](/screenshots/2020-05-13-213544_screenshot.png)
-
-List songs of an album.
-
-![](/screenshots/2020-05-13-211528_screenshot.png)
-
-Download songs with youtube-dl  
-
-![](/screenshots/2020-05-13-211622_screenshot.png)
-
-Download a Spotify playlist.   
-
-![](/screenshots/2020-05-13-211629_screenshot.png)  
-
-Download a Deezer playlist.    
-
-![](/screenshots/2020-05-13-211633_screenshot.png)  
-
-ncmpcpp mpd client.  
-
-![](/screenshots/2020-05-13-212025_screenshot.png)  
-
-
-
-### Tests
+## Tests
 
 ```bash
-cd app
-source venv/bin/activate
-python -m pytest -v tests.py
+cargo test --manifest-path rust/Cargo.toml
 ```
 
+## Layout
 
+- `rust/` — the application (see [`rust/README.md`](rust/README.md))
+- `settings.ini.example` — configuration template
+- `start.sh` — build/run launcher
 
-### Deployment with Ansible (including mpd and ympd)
-https://github.com/kmille/music-ansible (almost always outdated)
+## Not supported
 
+MPD, FLAC (MP3 only), Spotify, youtube-dl and the browser file index. Downloads
+are written directly to the configured directory.
 
+## License
 
-### Changelog
-
-#### Version 1.3.1 (21.01.2021)
-- allow to set download quality (flac|mp3) via environment variable DEEZER_FLAC_QUALITY (#43)
-
-#### Version 1.3 (05.11.2020)
-
-- feature: download your favorite Deezer songs
-- automated tests with Github Actions
-- push Docker image to [hub.docker.com](https://hub.docker.com/repository/docker/kmille2/deezer-downloader/general) with Github Actions
-
-#### Version 1.2 (01.11.2020)
-
-- **breaking change:** now use the `arl` cookie instead of the `sid` cookie. This cookie does not expire so we don't need the background thread that keeps the session alive
-- add support for flac as download format
-
-#### Version 1.1 (13.05.2020)
-
-- thanks to [luelista](https://github.com/luelista) for the contribution!
-- play 30 second preview in browser
-- add Vagrantfile
-- show album cover in search results
-- use a threaded queue for download tasks
-- list album songs
+MIT — see [`LICENSE`](LICENSE).

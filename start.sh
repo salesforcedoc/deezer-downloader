@@ -1,17 +1,18 @@
 #!/bin/bash
+set -e
+cd "$(dirname "$0")"
 
-# assume you have conda installed / python 3.10
-source ./conda_env.sh
+PORT_TO_CHECK="${PORT:-5000}"
+if lsof -nP -iTCP:"$PORT_TO_CHECK" -sTCP:LISTEN >/dev/null 2>&1; then
+    echo "Port $PORT_TO_CHECK is already in use (is another instance running?)."
+    echo "Stop it first, or run: PORT=5001 ./start.sh"
+    exit 1
+fi
 
-# start the backend
-DEEZER_FLAC_QUALITY=
+BIN=rust/target/release/deezer-downloader
+if [ ! -x "$BIN" ]; then
+    echo "Building the Rust app..."
+    (cd rust && cargo build --release)
+fi
 
-# kill any previous instances
-kill $(ps -ef | grep app.py | awk '{print $2}')  > /dev/null 2>&1
-
-# startup app
-python3 app/app.py & 
-
-# view frontend in the browser
-open http://localhost:5000
-#ncmpcpp -h 127.0.0.1
+exec "$BIN"

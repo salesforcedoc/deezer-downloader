@@ -1,15 +1,15 @@
 # deezer-downloader (Rust)
 
-A Rust port of the local web app. One binary, embedded UI, same REST endpoints
-as the Python version.
+A local web app for downloading Deezer tracks, albums, public playlists and
+favorites. One binary, embedded UI, small REST API.
 
 ## Features
 
-- Search tracks, albums, artists and playlists
+- Search All, tracks, albums, artists and playlists
 - Download tracks, albums, public playlists and a user's favorites
 - 320 kbps MP3 with Blowfish decryption, ID3v2.3/ID3v1 tags and cover art
 - ZIP + `m3u8` for albums, playlists and favorites
-- Task queue with the same states and progress reporting as the Python app
+- Task queue with progress reporting
 
 ## Not supported
 
@@ -21,20 +21,28 @@ as the Python version.
 ## Requirements
 
 - Rust 1.85+
-- A valid Deezer `arl` cookie in `app/settings.ini` (the same file the Python app uses)
+- A valid Deezer `arl` cookie in `settings.ini` at the repository root
 
 ## Build & run
 
+From the repository root:
+
 ```bash
-cd rust
-cargo build --release
-cd ..
+cargo build --release --manifest-path rust/Cargo.toml
+./start.sh
+```
+
+`start.sh` builds the binary if it is missing, checks the port, starts the server
+and opens <http://127.0.0.1:5000>.
+
+Or run the binary directly:
+
+```bash
 ./rust/target/release/deezer-downloader
 ```
 
-The binary looks for `app/settings.ini` in the current directory, then
-`settings.ini`, then `../app/settings.ini`. It serves
-<http://127.0.0.1:5000> and opens the browser automatically.
+The binary looks for `settings.ini` in the current directory, then
+`../settings.ini`.
 
 Environment overrides:
 
@@ -48,8 +56,7 @@ Environment overrides:
 ## Tests
 
 ```bash
-cd rust
-cargo test
+cargo test --manifest-path rust/Cargo.toml
 ```
 
 The tests cover the Blowfish key derivation (checked against a Python

@@ -87,13 +87,13 @@ fn find_settings() -> PathBuf {
     if let Ok(path) = std::env::var("DEEZER_SETTINGS") {
         return PathBuf::from(path);
     }
-    for candidate in ["app/settings.ini", "settings.ini", "../app/settings.ini"] {
+    for candidate in ["settings.ini", "../settings.ini"] {
         let path = PathBuf::from(candidate);
         if path.exists() {
             return path;
         }
     }
-    PathBuf::from("app/settings.ini")
+    PathBuf::from("settings.ini")
 }
 
 pub fn load() -> Result<Config> {

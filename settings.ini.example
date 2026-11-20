@@ -1,0 +1,24 @@
+;;; Deezer downloader configuration
+;;;
+;;; Copy this file to settings.ini and fill in cookie_arl and the download base.
+
+[http]
+host = 127.0.0.1
+port = 5000
+
+[threadpool]
+; maximum number of parallel downloads
+workers = 4
+
+[download_dirs]
+base = /tmp/deezer-downloader
+
+songs = %(base)s/songs
+albums = %(base)s/albums
+zips = %(base)s/zips
+playlists = %(base)s/playlists
+
+[deezer]
+; valid arl cookie from a logged-in deezer.com session
+; (browser devtools -> Application -> Cookies -> arl)
+cookie_arl = changeme
